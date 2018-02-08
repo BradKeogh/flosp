@@ -1,9 +1,60 @@
 # Script to call other scripts whilst dev
 
-import numpy as np
+# Magic needed for reloading in changes to imports automatically
+# after changing .py files
+from IPython import get_ipython
+ipython = get_ipython()
+ipython.magic("load_ext autoreload") # %load_ext autoreload
+ipython.magic("autoreload 2") # %autoreload 2
 
-#import scripts here
+#import dep
+import numpy as np
+import pandas as pd
+
+#import hospital-flow scripts here
 from Fcleaning import *
-from Ftests import *
+from Ftest import *
 from Ftransform import *
 from Fplot import *
+from Fio import *
+
+
+
+# import raw data
+rawED = EDimport()
+
+print('\n Script success.')
+
+
+# Fix list
+
+# issue with reimporting - functions do not re-import after changes
+# importlib.reload() should do it but need to automate?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ddqd
