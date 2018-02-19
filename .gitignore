@@ -2,3 +2,5 @@
 .ipynb_checkpoints
 
 1_Archive/
+.ropeproject/
+__pycache__/

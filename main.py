@@ -19,40 +19,15 @@ from Fplot import *
 from Fio import *
 
 
-# import raw data
-rawED = EDimport()
+# import ED data
+pd.read_csv('./../../4_analysis/processed/pmthED.csv')
+
+
 
 print('\n Script success.')
-
-
 # Fix list
-
 # issue with reimporting - functions do not re-import after changes
 # importlib.reload() should do it but need to automate?
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
