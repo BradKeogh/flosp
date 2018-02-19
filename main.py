@@ -18,9 +18,6 @@ from Ftransform import *
 from Fplot import *
 from Fio import *
 
-###this is a message added to master
-
-# branch test
 
 # import raw data
 rawED = EDimport()
