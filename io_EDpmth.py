@@ -60,7 +60,7 @@ print ('no. of admissions in dataset: ', rawED.adm_flag.sum())
 #### print
 print('-'*40)
 print('Saving rawED df to csv.')
-rawED.to_csv('../../../3_Data/processed/pmthED.csv',index=False)
+rawED.to_csv('../../3_Data/processed/pmthED.csv',index=False)
 
 print('\n Script success.')
 # Fix list
