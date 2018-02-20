@@ -12,15 +12,18 @@ import numpy as np
 import pandas as pd
 
 #import hospital-flow scripts here
+#ipython.magic("cd ./..")
+from column_checks import *
 from Fcleaning import *
 from Ftest import *
 from Ftransform import *
 from Fplot import *
 from Fio import *
 
+#ipython.magic("cd pmth")
 
 # import raw data
-rawED = EDimport('./../../3_Data/Patient Journey ED Data 22.01.2014 to 31.10.2015.csv')
+rawED = EDimport('./../../../3_Data/Patient Journey ED Data 22.01.2014 to 31.10.2015.csv', EDcols_io_pmth)
 #### possible additional cols in pmth ED dataset
 #presenting_complaint
 #reason_for_attendance
@@ -29,7 +32,7 @@ rawED = EDimport('./../../3_Data/Patient Journey ED Data 22.01.2014 to 31.10.201
 
 #### filter out only admissions to
 rawED = rawED[rawED.site == 'Queen Alexandra Hospital ED']
-rawED.reset_index(inplace=True)
+rawED.reset_index(inplace=True, drop=True)
 
 #### create datetime columns foe leaving and entering dept
 rawED = create_datetime_col(rawED)
@@ -57,7 +60,7 @@ print ('no. of admissions in dataset: ', rawED.adm_flag.sum())
 #### print
 print('-'*40)
 print('Saving rawED df to csv.')
-rawED.to_csv('../../3_Data/processed/pmthED.csv',index=False)
+rawED.to_csv('../../../3_Data/processed/pmthED.csv',index=False)
 
 print('\n Script success.')
 # Fix list
