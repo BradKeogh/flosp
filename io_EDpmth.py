@@ -23,7 +23,7 @@ from Fio import *
 #ipython.magic("cd pmth")
 
 # import raw data
-rawED = EDimport('./../../../3_Data/Patient Journey ED Data 22.01.2014 to 31.10.2015.csv', EDcols_io_pmth)
+rawED = EDimport('./../../3_Data/Patient Journey ED Data 22.01.2014 to 31.10.2015.csv', EDcols_io_pmth)
 #### possible additional cols in pmth ED dataset
 #presenting_complaint
 #reason_for_attendance
