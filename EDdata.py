@@ -40,11 +40,13 @@ class EDdata:
         """
         Run all checks we currently have on current progress.
         """
-        print('checing.')
+        print('Running checks.')
+
+        print('checks complete.')
 
         return
 
-    def importRAW(self,path,col_mapping):
+    def loadRAW(self,path,col_mapping):
         """
         Function imports ED data and extracts columns of interest into generic column namings.
 
@@ -55,29 +57,24 @@ class EDdata:
         Output
         Pandas dataframe of ED patient level data.
         """
-
         print('-'*40)
-        #print(importRAW)
+        #print(loadRAW)
         #### import dataframe
-        print('importing ED data to dataframe')
+        print('importing raw ED data to dataframe')
         df = pd.read_csv(path,
         low_memory=False)
         print('Dataframe shape: ', df.shape)
 
         #### tidy column names
-        from Fcleaning import pd_tidy_column_heads
+        #from Fcleaning import pd_tidy_column_heads
         df = pd_tidy_column_heads(df) # how do i call this inslide function?
 
         #### select columns
-
-        # define basic columns to include
-
-
         if col_mapping == None:
-            print('Only usual columns will be added.')
+            print('No columns mappings provided!')
             # should add a check here that all the column names are required
         else:
-            print('User defined columns are okay.')
+            print('User defined columns provided.')
         # rename columns to standard format
         df.rename(columns = col_mapping,inplace=True)
         df = df[list(col_mapping.values())]
@@ -87,17 +84,25 @@ class EDdata:
 
     def saveRAW(self):
         print('-'*40)
-        print('Saving rawED df to csv.')
-        self._dataRAW.to_csv('../../3_Data/processed/'+ self._name + 'ED.csv',index=False)
+        print('Saving rawED df to pkl.')
+        self._dataRAW.to_pickle('../../3_Data/processed/'+ self._name + 'EDpat.pkl')# saving as pkl so can conserve datatypes
+        #self._dataRAW.to_csv('../../3_Data/processed/'+ self._name + 'ED.csv',index=False) # save csv
+        #self._dataRAW.dtypes # save dictionary of datatypes for importing wihtout dtypes issues
         return
 
-    def importCLEAN(self):
+    def loadCLEAN(self):
         """
-
+        imports all clean data currently held in processes folder.
         """
+        self._dataCLEANpat = pd.read_pickle('../../3_Data/processed/'+ self._name + 'EDpat.pkl')
         return
 
     def create_datetime_columns(self):
+        """
+        Creates datetime column format, for arrival and leaving times, with seperate date and time columns (as strings/objects).
+        """
+        print('-'*40)
+        #print(create_datetime_columns)
         self._dataRAW = create_datetime_col(self._dataRAW)
 
     def create_auto_columns(self):
@@ -110,7 +115,7 @@ class EDdata:
         #### create waitingtime column
         self._dataRAW = make_waitingtime_column(self._dataRAW)
         #### create breach flags
-        self._dataRAW['breach'] = (self._dataRAW['waiting_time'] > 4*60).astype(int)
+        self._dataRAW['breach_flag'] = (self._dataRAW['waiting_time'] > 4*60).astype(int)
         #### create: day of week, time of day, month of year columns
         self._dataRAW = make_callender_columns(self._dataRAW,'arrival_datetime','arr')
         self._dataRAW = make_callender_columns(self._dataRAW,'leaving_datetime','leaving')
