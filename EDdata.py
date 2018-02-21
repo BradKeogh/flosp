@@ -2,7 +2,9 @@
 
 import json
 import pandas as pd
+import numpy as np
 
+from expected_file_structures import *
 
 
 class EDdata:
@@ -15,14 +17,26 @@ class EDdata:
 
     def __init__(self,name):
         self._name = name
+        print(40*'-')
+        print(name + ' has been created.')
+        print()
 
-        # check for logfile for metadata
+        # import expected file structure data
+        self._dataRAW_expected_dtypes = dataRAW_expected_dtypes #dict of cols:dtypes
+        self._dataRAW_expected_cols = list(dataRAW_expected_dtypes.keys()) #list columns
+        self._dataframes_list = dataframes_list # list of possible dataframes
+
+
+
+
+        # check for datafiles, autoload and run checks, status. - curretnly redundant
         from pathlib import Path
         myfile = Path('./logs/' + name +'.py')
         if 1 == 1: #myfile.exists():
+            print()
             # load file and vars within _path_*, _check_*
             #https://pythonspot.com/json-encoding-and-decoding-with-python/
-            print('file exists')
+            #print('file exists')
         else:
             # create log file - write to it whenever save a df etc
             for_log = {'name':self._name}
@@ -33,16 +47,35 @@ class EDdata:
         """
         Method to print details about class instance.
         """
-        print(self._name)
+        print(40*'-')
+        print('Name of data: ' + self._name)
+        print()
+
+        for i in self._dataframes_list:
+            check_presence_df(self,i)
         return
 
     def checks(self):
         """
         Run all checks we currently have on current progress.
         """
-        print('Running checks.')
+        print('---')
+        print('Running checks...')
+        for i in self._dataframes_list:
+            if check_presence_df(self,i) == True:
+                ## list columns that are missing
+                x1 = getattr(self, i)
+                x1 = set(x1.columns)
+                x2 = set(self._dataRAW_expected_cols)
+                if len(list(x2 - x1)) >= 1:
+                    print('Missing coluns: ' , list(x2 - x1))
+                else:
+                    print('Columns present.')
+                    ## call funct to check datatypes here!
 
-        print('checks complete.')
+        # check_missing func?
+        print()
+        print('Checks complete.')
 
         return
 
@@ -135,6 +168,17 @@ def checkmissing(x):
     """
     return df.isnull().sum()
 
+def check_presence_df(x,df_name):
+    """
+    check if dataframe present
+    """
+    if hasattr(x, df_name):
+        print(df_name, ' currently loaded.')
+        operation = True
+    else:
+        operation = False
+    return operation
+
 def check_standard_colsED(x):
     """
     Function to check if standard columsn are present and flag warning if arn't.
@@ -163,7 +207,7 @@ def check_standard_colsED(x):
     for i in standard_colsED:
         if i not in x.columns:
             print('WARNING: standard column missing in ED data: ', i)
-    return()
+    return
 
 
 def pd_tidy_column_heads(x):
