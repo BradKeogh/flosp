@@ -131,10 +131,22 @@ class EDdata:
         #self._dataRAW.dtypes # save dictionary of datatypes for importing wihtout dtypes issues
         return
 
+    def saveCLEAN(self):
+        print('-'*40)
+        print('Saving cleanEDday df to pkl.')
+        self._dataCLEANday.to_pickle('../../3_Data/processed/'+ self._name + 'EDday.pkl')# saving as pkl so can conserve datatypes
+        #self._dataRAW.to_csv('../../3_Data/processed/'+ self._name + 'ED.csv',index=False) # save csv
+        #self._dataRAW.dtypes # save dictionary of datatypes for importing wihtout dtypes issues
+        return
+
     def loadCLEAN(self):
         """
         imports all clean data currently held in processes folder.
         """
+        ### !! need to ammend to make optional.
+        # look in folder and find all the files that exist in there. Then import each as appropriate ._data* depending on what the filename is. Need to decide how to structure future folder/files and class actually. i.e. do we need ED and IP seperators. 
+        #for i in self._dataframes_list:
+        #    if
         self._dataCLEANpat = pd.read_pickle('../../3_Data/processed/'+ self._name + 'EDpat.pkl')
         return
 
@@ -160,6 +172,122 @@ class EDdata:
         #### create: day of week, time of day, month of year columns
         self._dataRAW = make_callender_columns(self._dataRAW,'arrival_datetime','arr')
         self._dataRAW = make_callender_columns(self._dataRAW,'leaving_datetime','leaving')
+
+    def create_dailyED(self):
+        """
+        create new df at daily level from patient level.
+
+        input: none
+        output
+        new df saved in ._dataCLEANday
+        """
+        ##### First need to calculate waiting times (split over days for calc of how mnay ED waiting minutes there were)
+        ##### possible that should move this upstream at later stage so available to pat level df.
+        df = self._dataCLEANpat
+
+        def minutes_in_ED_today(x):
+            if x.arrival_datetime.date() == x.leaving_datetime.date():
+                y = x.waiting_time
+            else:
+                y = (24*60) - (x.arrival_datetime.hour*60 + x.arrival_datetime.minute)
+            return(y)
+
+        print(df.columns)
+
+        df['minutes_today'] = df.apply(minutes_in_ED_today,axis=1)
+
+        def minutes_in_ED_tomo(x):
+            if x.arrival_datetime.date() != x.leaving_datetime.date():
+                y = x.leaving_datetime.minute + x.leaving_datetime.hour*60
+            else:
+                y = 0
+            return(y)
+
+        df['minutes_tomo'] = df.apply(minutes_in_ED_tomo,axis=1)
+
+        # check total waiting times match up
+        if df[['minutes_tomo','minutes_today']].sum().sum() != df['waiting_time'].sum():
+            print('WARNING: problem with aggregating minutes over days.')
+            print(df[['minutes_tomo','minutes_today']].sum().sum())
+            print(df['waiting_time'].sum())
+
+        # calc: arrival numbers, median age
+
+        df_gb = df[['arrival_datetime','age','minutes_today']]
+
+        agg_dic = {'arrival_datetime':'count'
+                    ,'age':'median'
+                  ,'minutes_today':'sum'
+                  }
+
+        daily1 = df_gb.groupby(by=[df_gb['arrival_datetime'].dt.date]).agg(agg_dic)
+
+        #calc: discharges + admissions
+        df_gb = df[['leaving_datetime','age','adm_flag','minutes_tomo']]
+
+        agg_dic = {'leaving_datetime':'count'
+                   ,'adm_flag':'sum'
+                   ,'minutes_tomo':'sum'
+                    }
+
+        daily2 = df_gb.groupby(by=[df_gb['leaving_datetime'].dt.date]).agg(agg_dic)
+        #daily2.head()
+
+        #calc: breaches counts - this should be lifted updwards!
+        df['breach_datetime'] = df.arrival_datetime + pd.Timedelta('4 hour')
+
+        df_gb = df[['breach_datetime','breach_flag']]
+
+        agg_dic = {'breach_flag':'sum'
+                    }
+
+        daily3 = df_gb.groupby(by=[df_gb['breach_datetime'].dt.date]).agg(agg_dic)
+        #daily3.head(5)
+
+        #cal total number of minutes waiting each day?
+
+        # merge each of daily dfs created
+
+        daily1.shape
+
+        daily2.shape
+
+        daily = pd.merge(daily1,daily2,left_index=True, right_index=True,how='outer')
+        daily.shape
+
+        daily3.shape
+
+        daily = pd.merge(daily,daily3,left_index=True,right_index=True,how='outer')
+        daily.shape
+
+
+        # make total minutes used in ED column
+        daily['minutes_used'] = daily.minutes_today + daily.minutes_tomo
+        daily.shape
+        daily.drop(['minutes_today','minutes_tomo'],axis=1,inplace=True)
+        daily.shape
+
+        # rename columns sensibly
+        #daily.columns
+        daily.rename(columns={'arrival_datetime':'arrivals','leaving_datetime':'discharges','age':'age_median',
+                             'adm_flag':'admissions','breach_flag':'breaches'},inplace=True)
+        daily.head()
+        daily['mean_patient_minutes'] = daily.minutes_used/daily.arrivals
+
+        #### !! print wanring if we are missing dates, check that in reshape daily df was correct size
+        # check for missing dates
+        daily.shape
+        daily.reindex().shape
+        daily.isnull().sum()
+
+        # create other vars of interest from daily
+        daily['conversion_ratio'] = daily.admissions/daily.arrivals
+        daily['breaches_perc'] = daily.breaches/daily.arrivals
+        self._dataCLEANday = daily
+
+        self.saveCLEAN()
+        return
+
 
     def __call__(self):
         return self.status()
@@ -202,7 +330,7 @@ def check_column_dtypes(x,df,exp_dict = '_dataRAW_expected_dtypes'):
     for j in df.columns:
         if df[j].dtypes != df_dtypes[j]:
             print('Col ', j, ' is of dtype:',df[j].dtypes,'. Expected: ', df_dtypes[j])
-            
+
     return
 
 def check_standard_colsED(x):

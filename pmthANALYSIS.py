@@ -22,5 +22,7 @@ pmED.status()
 
 pmED.checks()
 
+pmED.create_dailyED()
+
 
 set(pmED._dataCLEANpat.columns)
