@@ -50,16 +50,18 @@ class EDdata:
         print(40*'-')
         print('Name of data: ' + self._name)
         print()
-
+        print('Datas currently loaded:')
         for i in self._dataframes_list:
-            check_presence_df(self,i)
+            present = check_presence_df(self,i)
+            if present == True:
+                print(i)
         return
 
     def checks(self):
         """
         Run all checks we currently have on current progress.
         """
-        print('---')
+        print('-'*20)
         print('Running checks...')
         for i in self._dataframes_list:
             if check_presence_df(self,i) == True:
@@ -68,16 +70,22 @@ class EDdata:
                 x1 = set(x1.columns)
                 x2 = set(self._dataRAW_expected_cols)
                 if len(list(x2 - x1)) >= 1:
-                    print('Missing coluns: ' , list(x2 - x1))
+                    print('Missing columns: ' , list(x2 - x1))
                 else:
                     print('Columns present.')
                     ## call funct to check datatypes here!
+                    check_column_dtypes(self, i)
+
+
+
 
         # check_missing func?
         print()
         print('Checks complete.')
 
         return
+
+
 
     def loadRAW(self,path,col_mapping):
         """
@@ -173,11 +181,29 @@ def check_presence_df(x,df_name):
     check if dataframe present
     """
     if hasattr(x, df_name):
-        print(df_name, ' currently loaded.')
-        operation = True
+        present = True
     else:
-        operation = False
-    return operation
+        present = False
+    return present
+
+def check_column_dtypes(x,df,exp_dict = '_dataRAW_expected_dtypes'):
+    """
+    Take df argument and check if dtypes match expected for RAW.
+    Input
+    df: attribute pointer for df to check
+    exp_dict: dict, columns and expected datatypes.
+
+    Output
+
+    """
+    df_dtypes = getattr(x,exp_dict)
+    df = getattr(x,df)
+
+    for j in df.columns:
+        if df[j].dtypes != df_dtypes[j]:
+            print('Col ', j, ' is of dtype:',df[j].dtypes,'. Expected: ', df_dtypes[j])
+            
+    return
 
 def check_standard_colsED(x):
     """
