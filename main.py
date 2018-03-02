@@ -15,3 +15,6 @@ import pandas as pd
 from hospital import *
 
 pmth = hosp('pmth')
+
+
+pmth.day.plotED()

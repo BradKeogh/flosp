@@ -93,12 +93,18 @@ class hosp(object):
             # load data and assign to attribute
             self._loadPKL(i,attrib_name)
 
-    def _loadRAW(self):
+    def _loadRAW(self, select_period=None):
         ## look for filelist, if present load, if not print not found. Retunr list of founds.
-        poss_files = [
-        self._name + 'ED' + self._period + '.pkl',
-        self._name + 'IP'+ self._period + '.pkl'
-        ]
+
+        #generate possible filelist
+        poss_files = []
+        for j in self._dataframes_list:
+            f1 = self._name + j[7:] + '.pkl'
+            if select_period == None:
+                poss_files.append(f1) # if no period selected will choose load all files into class that called
+            elif select_period in f1:
+                poss_files.append(f1) # if select_period specified will only add files to poss_files if contains the string. Used for .pat .day .week .mon loading.
+
         self._pathRAW = self._pathCLEAN + 'RAW/'
         files = self._searchFILE(self._pathRAW,poss_files)
         #call load on list that is retuned
@@ -322,8 +328,6 @@ class pat(hosp):
     def loadCLEAN(self):
         self._loadCLEAN(select_period = self._period)
 
-
-
     def get_ED(self):
         """ return ED df """
         return self._ED
@@ -331,6 +335,7 @@ class pat(hosp):
     def get_IP(self):
         """ return IP df """
         return self._IP
+
 
 class day(hosp):
     def __init__(self, meta_info):
@@ -351,6 +356,10 @@ class day(hosp):
     def get_IP(self):
         """ return IP df """
         return self._IP
+
+    def plotED(self):
+        from Fplot import plotEDday
+        plotEDday(self._ED)
 
 
 class week(hosp):
@@ -386,6 +395,7 @@ def make_callender_columns(x,column,prefix):
     x[prefix + '_hour'] = x[column].dt.hour.astype(object)
     x[prefix + '_dayofweek'] = x[column].dt.dayofweek.astype(object)
     x[prefix + '_month'] = x[column].dt.month.astype(object)
+    x[prefix + '_weekday_name'] = x[column].dt.weekday_name.astype(object)
     return(x)
 
 def pd_tidy_column_heads(x):
@@ -602,4 +612,26 @@ def create_dailyED(x):
     daily['conversion_ratio'] = daily.admissions/daily.arrivals
     daily['breaches_perc'] = daily.breaches/daily.arrivals
 
+    # create cols of dow,month,year
+    daily['date'] = daily.index
+
+    daily['year'] = daily.date.apply(lambda x: x.year)
+
+    daily['month'] = daily.date.apply(lambda x: x.month)
+
+    #### workaround for dayofweek as date col is a
+    daily['dayofweek'] = pd.to_datetime(daily.date.values).dayofweek
+
+    daily['weekday_name'] = pd.to_datetime(daily.date.values).weekday_name
+
+    daily['date'] = pd.to_datetime(daily.index)
+
+    #### add prefix ED_ to columns
+    prefix_cols(daily,'ED_')
+
     return daily
+
+def prefix_cols(x,prefix):
+    """ adds string prefix to all col names inplace"""
+    for i in x.columns:
+        x.rename(columns={i:prefix + i},inplace=True)

@@ -25,3 +25,4 @@ our code sucessfully. To do this:
 
 #### to-do
 - resolve pink copy warning in create arrival_datetime columns
+- bug: ioED.loadRAW and loadCLEAN
