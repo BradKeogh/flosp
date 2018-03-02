@@ -114,10 +114,10 @@ class hosp(object):
         """
         for i in attribute_list:
             df = getattr(self,i)
-            period = i[7:] # get EDpat, IPday part of name
-            path = path + self._name + period + '.pkl'
-            df.to_pickle(path)
-            print(self._name + period + '.pkl')
+            dt_period = i[7:] # get EDpat, IPday part of name
+            fullfilepath = path + self._name + dt_period + '.pkl'
+            df.to_pickle(fullfilepath)
+            print(self._name + dt_period + '.pkl')
 
     def get_pathCLEAN(self):
         return self._pathCLEAN
@@ -255,6 +255,11 @@ class ioED(hosp):
         self._dataRAW = make_callender_columns(self._dataRAW,'arrival_datetime','arr')
         self._dataRAW = make_callender_columns(self._dataRAW,'leaving_datetime','leaving')
 
+    def create_aggregates(self):
+        """ create daily, weekly and monthly transforms of data. RAW patient level data will need to be in standard format before running this is problems not to occur!
+        """
+        self._dataR_EDday = create_dailyED(self._dataRAW)
+
     def transform(self):
         pass
 
@@ -282,7 +287,8 @@ class ioED(hosp):
         if len(raw_df_list) == 0:
             print('No RAW files to save.')
         else:
-            path = self._pathCLEAN            self._savePKL(path,raw_df_list)
+            path = self._pathCLEAN
+            self._savePKL(path,raw_df_list)
 
         print('Save complete.')
         return
@@ -470,3 +476,115 @@ def make_waitingtime_column(x):
     print(make_waitingtime_column)
     x['waiting_time'] = (x['leaving_datetime'] - x['arrival_datetime']) / pd.Timedelta('1 minute')
     return(x)
+
+def create_dailyED(x):
+    """
+    create new df at daily level from patient level.
+
+    input: df, x
+    output: df, dailyED
+    """
+    ##### First need to calculate waiting times (split over days for calc of how mnay ED waiting minutes there were)
+    ##### possible that should move this upstream at later stage so available to pat level df.
+    df = x
+
+    def minutes_in_ED_today(x):
+        if x.arrival_datetime.date() == x.leaving_datetime.date():
+            y = x.waiting_time
+        else:
+            y = (24*60) - (x.arrival_datetime.hour*60 + x.arrival_datetime.minute)
+        return(y)
+
+    print(df.columns)
+
+    df['minutes_today'] = df.apply(minutes_in_ED_today,axis=1)
+
+    def minutes_in_ED_tomo(x):
+        if x.arrival_datetime.date() != x.leaving_datetime.date():
+            y = x.leaving_datetime.minute + x.leaving_datetime.hour*60
+        else:
+            y = 0
+        return(y)
+
+    df['minutes_tomo'] = df.apply(minutes_in_ED_tomo,axis=1)
+
+    # check total waiting times match up
+    if df[['minutes_tomo','minutes_today']].sum().sum() != df['waiting_time'].sum():
+        print('WARNING: problem with aggregating minutes over days.')
+        print(df[['minutes_tomo','minutes_today']].sum().sum())
+        print(df['waiting_time'].sum())
+
+    # calc: arrival numbers, median age
+
+    df_gb = df[['arrival_datetime','age','minutes_today']]
+
+    agg_dic = {'arrival_datetime':'count'
+                ,'age':'median'
+              ,'minutes_today':'sum'
+              }
+
+    daily1 = df_gb.groupby(by=[df_gb['arrival_datetime'].dt.date]).agg(agg_dic)
+
+    #calc: discharges + admissions
+    df_gb = df[['leaving_datetime','age','adm_flag','minutes_tomo']]
+
+    agg_dic = {'leaving_datetime':'count'
+               ,'adm_flag':'sum'
+               ,'minutes_tomo':'sum'
+                }
+
+    daily2 = df_gb.groupby(by=[df_gb['leaving_datetime'].dt.date]).agg(agg_dic)
+    #daily2.head()
+
+    #calc: breaches counts - this should be lifted updwards!
+    df['breach_datetime'] = df.arrival_datetime + pd.Timedelta('4 hour')
+
+    df_gb = df[['breach_datetime','breach_flag']]
+
+    agg_dic = {'breach_flag':'sum'
+                }
+
+    daily3 = df_gb.groupby(by=[df_gb['breach_datetime'].dt.date]).agg(agg_dic)
+    #daily3.head(5)
+
+    #cal total number of minutes waiting each day?
+
+    # merge each of daily dfs created
+
+    daily1.shape
+
+    daily2.shape
+
+    daily = pd.merge(daily1,daily2,left_index=True, right_index=True,how='outer')
+    daily.shape
+
+    daily3.shape
+
+    daily = pd.merge(daily,daily3,left_index=True,right_index=True,how='outer')
+    daily.shape
+
+
+    # make total minutes used in ED column
+    daily['minutes_used'] = daily.minutes_today + daily.minutes_tomo
+    daily.shape
+    daily.drop(['minutes_today','minutes_tomo'],axis=1,inplace=True)
+    daily.shape
+
+    # rename columns sensibly
+    #daily.columns
+    daily.rename(columns={'arrival_datetime':'arrivals','leaving_datetime':'discharges','age':'age_median',
+                         'adm_flag':'admissions','breach_flag':'breaches'},inplace=True)
+    daily.head()
+    daily['mean_patient_minutes'] = daily.minutes_used/daily.arrivals
+
+    #### !! print wanring if we are missing dates, check that in reshape daily df was correct size
+    # check for missing dates
+    daily.shape
+    daily.reindex().shape
+    daily.isnull().sum()
+
+    # create other vars of interest from daily
+    daily['conversion_ratio'] = daily.admissions/daily.arrivals
+    daily['breaches_perc'] = daily.breaches/daily.arrivals
+
+    return daily

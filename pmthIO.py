@@ -76,7 +76,7 @@ pmth.ioED.get_EDraw().head(2)
 
 #### calculate total patinet time for each day - in transformation function?
 
-
+pmth.ioED.create_aggregates()
 
 #### print
 pmth.ioED.saveRAWasRAW()
