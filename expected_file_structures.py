@@ -1,5 +1,5 @@
 import numpy as np
-dataframes_list = ['_dataRAW','_dataCLEANpat','_dataCLEANday','_dataCLEANwk','_dataCLEANmonth']
+dataframes_list = ['_dataR_EDpat','_dataR_EDdaily','_dataR_EDweekly','_dataR_EDmonthly']
 
 dataRAW_expected_dtypes = {
 'dept_patid':np.object,
