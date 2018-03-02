@@ -20,3 +20,8 @@ our code sucessfully. To do this:
 - type: 'activate hospital-flow' ('source activate hospital-flow' in mac)
 
 #### running the script
+
+
+
+#### to-do
+- resolve pink copy warning in create arrival_datetime columns

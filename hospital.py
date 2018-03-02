@@ -33,8 +33,9 @@ class hosp(object):
         self.ioED = ioED(meta_info)
         self.ioIP = ioIP(meta_info)
         self.pat = pat(meta_info)
-        self.daily = daily(meta_info)
-        self.weekly = weekly(meta_info)
+        self.day = day(meta_info)
+        self.week = week(meta_info)
+        #self.mon = mon(meta_info)
 
 
     def _unpack_meta(self, meta_info):
@@ -69,12 +70,19 @@ class hosp(object):
 
         return avail_files
 
-    def _loadCLEAN(self):
+    def _loadCLEAN(self,select_period = None):
         ## look for filelist, if present load, if not print not found. Retunr list of founds.
-        poss_files = [
-        self._name + 'ED' + self._period + '.pkl',
-        self._name + 'IP'+ self._period + '.pkl'
-        ]
+
+        #generate possible filelist
+        poss_files = []
+        for j in self._dataframes_list:
+            f1 = self._name + j[7:] + '.pkl'
+            if select_period == None:
+                poss_files.append(f1) # if no period selected will choose load all files into class that called
+            elif select_period in f1:
+                poss_files.append(f1) # if select_period specified will only add files to poss_files if contains the string. Used for .pat .day .week .mon loading.
+
+
 
         files = self._searchFILE(self._pathCLEAN,poss_files)
         #call load on list that is retuned
@@ -309,10 +317,10 @@ class pat(hosp):
         print('-'*20)
         print('Patient fileload: ')
         print('-'*20)
-        self._loadCLEAN()
+        self._loadCLEAN(select_period = self._period)
 
     def loadCLEAN(self):
-        self._loadCLEAN()
+        self._loadCLEAN(select_period = self._period)
 
 
 
@@ -321,27 +329,31 @@ class pat(hosp):
         return self._ED
 
     def get_IP(self):
-        """ return ED df """
-        return self._ED
+        """ return IP df """
+        return self._IP
 
-class daily(hosp):
+class day(hosp):
     def __init__(self, meta_info):
-        self._period = 'daily'
+        self._period = 'day'
         self._unpack_meta(meta_info)
         print('-'*20)
         print('Daily fileload: ')
         print('-'*20)
-        self._loadCLEAN()
+        self._loadCLEAN(select_period = self._period)
 
     def loadCLEAN(self):
-        self._loadCLEAN()
+        self._loadCLEAN(select_period = self._period)
 
-    def create_daily(self):
-        pass
+    def get_ED(self):
+        """ return ED df """
+        return self._ED
+
+    def get_IP(self):
+        """ return IP df """
+        return self._IP
 
 
-
-class weekly(hosp):
+class week(hosp):
     def __init__(self,meta_info):
         self._unpack_meta(meta_info)
         pass
@@ -350,6 +362,9 @@ class weekly(hosp):
 
     def create_weekly(self):
         pass
+
+class mon(hosp):
+    pass
 
 ######################################################
 #### seperate functions ####

@@ -49,7 +49,7 @@ df_temp = pmth.ioED.get_EDraw() #get df out of pmED
 # filter out only admissions to QA
 df_temp = df_temp[df_temp.site == 'Queen Alexandra Hospital ED']
 df_temp.reset_index(inplace=True, drop=True)
-df_temp = df_temp[0:100] ###! delete this later on! made for quicker processing
+#df_temp = df_temp[0:100] ###! delete this later on! made for quicker processing
 df_temp = create_datetime_col(df_temp) #### create datetime columns foe leaving and entering dept from arrival day and time
 #### crete_datetime_col warnings leaves pink errors. should tidy at some point.
 
