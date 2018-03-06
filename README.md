@@ -26,3 +26,4 @@ our code sucessfully. To do this:
 #### to-do
 - resolve pink copy warning in create arrival_datetime columns
 - bug: ioED.loadRAW and loadCLEAN
+- question that required_cols in expected file strucutre are all required in the end! remove: arrival_date, arrival_time, 

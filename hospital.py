@@ -175,13 +175,14 @@ class ioED(hosp):
     def loadRAW(self):
         self._loadRAW()
 
-    def load_hosp_csv(self,path,col_mapping):
+    def load_hosp_csv(self,path,col_mapping, tidy_cols = False):
         """
         Function imports ED data and extracts columns of interest into generic column namings.
 
         Inputs
         path: string, path to RAW ED csv file
         cols_select: dict, dictionary of columns to use {'name of col in input df':'new column name'}
+        tidy_cols: boolean, if True will tidy up col names before renaming and selecting columns
 
         Output
         Pandas dataframe of ED patient level data.
@@ -196,7 +197,8 @@ class ioED(hosp):
 
         #### tidy column names
         #from Fcleaning import pd_tidy_column_heads
-        df = pd_tidy_column_heads(df) # how do i call this inslide function?
+        if tidy_cols == True:
+            df = pd_tidy_column_heads(df) # how do i call this inslide function?
         #### select columns
         if col_mapping == None:
             print('No columns mappings provided!')
@@ -205,6 +207,8 @@ class ioED(hosp):
             print('User defined columns provided.')
         # rename columns to standard format
         df.rename(columns = col_mapping,inplace=True)
+        #self._dataRAW = df
+        #self._cm = col_mapping
         df = df[list(col_mapping.values())]
         self._dataRAW = df
         print('Raw data loaded.')
