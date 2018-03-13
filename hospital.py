@@ -17,7 +17,7 @@ class hosp(object):
         '_pathCLEAN': './../../3_Data/processed/',
         '_pathOUTPUT': './../../6_Outputs/',
         '_dataRAW_expected_dtypes':dataRAW_expected_dtypes,
-        '_dataRAW_expected_cols':list(dataRAW_expected_dtypes.keys()),
+        '_dataRAW_expected_cols':dataRAW_expected_cols,
         '_dataframes_list':dataframes_list
         }
 
@@ -175,7 +175,7 @@ class ioED(hosp):
     def loadRAW(self):
         self._loadRAW()
 
-    def load_hosp_csv(self,path,col_mapping, tidy_cols = False):
+    def load_hosp_csv(self,path,col_mapping, tidy_cols = False, datetime_conversion = False):
         """
         Function imports ED data and extracts columns of interest into generic column namings.
 
@@ -183,6 +183,7 @@ class ioED(hosp):
         path: string, path to RAW ED csv file
         cols_select: dict, dictionary of columns to use {'name of col in input df':'new column name'}
         tidy_cols: boolean, if True will tidy up col names before renaming and selecting columns
+        datetime_conversion: boolean, if True will find all columns with 'datetime' in name and convert to type datetime.
 
         Output
         Pandas dataframe of ED patient level data.
@@ -190,7 +191,7 @@ class ioED(hosp):
         print('-'*40)
         #print(loadRAW)
         #### import dataframe
-        print('importing raw ED data to dataframe')
+        print('importing ED csv data to RAW dataframe')
         print('-'*40)
         df = pd.read_csv(path,
         low_memory=False)
@@ -201,18 +202,35 @@ class ioED(hosp):
             df = pd_tidy_column_heads(df) # how do i call this inslide function?
         #### select columns
         if col_mapping == None:
-            print('No columns mappings provided!')
+            print('No columns mappings provided! You need to provide a dictionary of suitable column names!')
             # should add a check here that all the column names are required
         else:
             print('User defined columns provided.')
-        # rename columns to standard format
+        # rename columns to roughly standard format provided
         df.rename(columns = col_mapping,inplace=True)
         #self._dataRAW = df
         #self._cm = col_mapping
         df = df[list(col_mapping.values())]
         self._dataRAW = df
         print('Raw data loaded.')
+
+        ### call auto datetime conversion func?
+        if datetime_conversion == True:
+            print(20*'-')
+            print('converting datetime cols to correct dtype.')
+            raise Exception('datetime_conversion can be probelmatic due to assumptions of string input format. Use convert_cols_datetime method instead, where you need to define the string format.')
+            df = convert_cols_datetime(df)
+
         return #df
+
+    def convert_cols_datetime(self,dt_format,col_names = None):
+        """ convert cols to datetime
+        input
+        dt_format: str, specifiying the format that the datetime columns are in before conversion. ,e.g. "%d/%m/%Y %H:%M"
+        col_names: list of str, columns that you wish to convert. If default None then will find all columns with 'datetime' in name and convert.
+        """
+        convert_cols_datetime(self._dataRAW,dt_format,col_names = None)
+        return
 
     def checks(self):
         """
@@ -222,6 +240,18 @@ class ioED(hosp):
         print('Running checks on RAW df...')
         print('-'*40)
         self.status()
+
+        ## check standard column names and if they are the correct dtype
+        print('-'*20)
+
+        for i in self._dataframes_list:
+            if check_presence_df(self,i) == True:
+                print('Some data types are incorrect: suggest you solve these before creating new columns.')
+                print('Print: ', i)
+                check_column_dtypes(self,i,col_to_check=None)
+
+        print('-'*20)
+        ## find columns which dont exist which should and print them
         for i in self._dataframes_list:
             if check_presence_df(self,i) == True:
                 ## list columns that are missing
@@ -270,8 +300,8 @@ class ioED(hosp):
         #### create breach flags
         self._dataRAW['breach_flag'] = (self._dataRAW['waiting_time'] > 4*60).astype(int)
         #### create: day of week, time of day, month of year columns
-        self._dataRAW = make_callender_columns(self._dataRAW,'arrival_datetime','arr')
-        self._dataRAW = make_callender_columns(self._dataRAW,'leaving_datetime','leaving')
+        self._dataRAW = make_callender_columns(self._dataRAW,'arrive_datetime','arrive')
+        self._dataRAW = make_callender_columns(self._dataRAW,'depart_datetime','depart')
 
     def create_aggregates(self):
         """ create daily, weekly and monthly transforms of data. RAW patient level data will need to be in standard format before running this is problems not to occur!
@@ -282,7 +312,7 @@ class ioED(hosp):
         pass
 
     def saveRAWasRAW(self):
-        """ save the raw files as .pkl in the processed folder specified """
+        """ save all raw files in memory as .pkl in the processed folder specified """
         self._dataR_EDpat = self._dataRAW #move patinet lvl data to this attribute for saving
         print('-'*40)
         print('Saving RAW as pkls in RAW folder...')
@@ -297,11 +327,12 @@ class ioED(hosp):
         return
 
     def saveRAWasCLEAN(self):
-        """ save the raw files as .pkl in the processed folder specified. Do once happy that data is all clean. """
+        """ save all raw files in memory as .pkl in the processed folder specified. Do once happy that data is all clean. """
         self._dataR_EDpat = self._dataRAW #move patinet lvl data to this attribute for saving
         print('-'*40)
         print('Saving RAW as pkls in CLEAN folder...')
         raw_df_list = self._searchATTRIBUTE()
+        raw_df_list.remove('_dataRAW')
         if len(raw_df_list) == 0:
             print('No RAW files to save.')
         else:
@@ -445,25 +476,56 @@ def check_presence_df(x,df_name):
     return present
 
 
-def check_column_dtypes(x,df,exp_dict = '_dataRAW_expected_dtypes'):
+def check_column_dtypes(x,df,exp_dict = '_dataRAW_expected_dtypes',col_to_check = None):
     """
     Take df argument and check if dtypes match expected for RAW.
     Input
     df: attribute pointer for df to check
     exp_dict: dict, columns and expected datatypes.
-
+    col_to_check: list of strings, column names that we wish to check. If None, will check all cols.
     Output
 
     """
     df_dtypes = getattr(x,exp_dict)
     df = getattr(x,df)
 
-    for j in df.columns:
-        if df[j].dtypes != df_dtypes[j]:
-            print('Col ', j, ' is of dtype:',df[j].dtypes,'. Expected: ', df_dtypes[j])
+    if col_to_check == None:
+        for j in df.columns:
+            if not df[j].dtypes in df_dtypes[j]:
+                print('Col ', j.ljust(25), ' is:',df[j].dtypes,'. Expected any of: ', df_dtypes[j])
+    else:
+        for j in col_to_check:
+            if df[j].dtypes != df_dtypes[j]:
+                print('Col ', j.ljust(25), ' is:',df[j].dtypes,'. Expected any of: ', df_dtypes[j])
+
 
     return
 
+def convert_cols_datetime(x,dt_format,col_names = None):
+    """ convert either all columns with datetime in name to type datetime, or if col_names given only convert slected cols.
+    input
+    x: df,
+    col_names: list of str, optional containing names of columns to convert
+    return: new type converted df
+    """
+    print(40*'-')
+    print('Converting cols to datetime...(may take some time depedning on size of df)...')
+    print(20*'-')
+    if col_names == None:
+        for i in x.columns:
+            if ('datetime' in i) & (x[i].dtype != np.dtype('datetime64[ns]')):
+                #### selected cols have datetime in name and are not of type datetime64
+                print(i)
+                x[i] = pd.to_datetime(x[i],format=dt_format)
+    else:
+        for i in col_names:
+            print(i)
+            x[i] = pd.to_datetime(x[i],format=dt_format)
+    print(20*'-')
+    print('Conversion complete.')
+    print(20*'-')
+
+    return(x)
 
 def create_datetime_col(x):
     """
@@ -476,21 +538,21 @@ def create_datetime_col(x):
     print('-'*40)
     # Create arrival datetime column
     print('Creating arrival datetime column...(make take some time)')
-    f = lambda i: pd.to_datetime(i.arrival_date + ' ' + i.arrival_time)
-    x['arrival_datetime'] = x.apply(f,axis=1)
+    f = lambda i: pd.to_datetime(i.arrive_date + ' ' + i.arrive_time)
+    x['arrive_datetime'] = x.apply(f,axis=1)
 
     #Create dishcarge datetime column
-    print('Creating leaving datetime column...(make take some time)')
-    f = lambda j: pd.to_datetime(j.arrival_date + ' ' + j.leaving_time)
-    x['leaving_datetime'] = x.apply(f,axis=1)
+    print('Creating depart datetime column...(make take some time)')
+    f = lambda j: pd.to_datetime(j.arrive_date + ' ' + j.depart_time)
+    x['depart_datetime'] = x.apply(f,axis=1)
 
     # correct negative stay times in ED (these are people who have rolled past midnight). There is an assumption here that LOS !> 24hours
-    datetime_values = x[(x.leaving_datetime - x.arrival_datetime) < pd.Timedelta(0)].leaving_datetime + pd.Timedelta('1 days')
+    datetime_values = x[(x.depart_datetime - x.arrive_datetime) < pd.Timedelta(0)].depart_datetime + pd.Timedelta('1 days')
 
-    x.leaving_datetime.iloc[datetime_values.index] = datetime_values.values
+    x.depart_datetime.iloc[datetime_values.index] = datetime_values.values
 
     #### there are 8 people who were in there for > 24 hours. we have no way of picking up how long they were in there.
-    #df[(df.discharge_time - df.arrival_time) == pd.Timedelta('1 days')].shape
+    #df[(df.discharge_time - df.arrive_time) == pd.Timedelta('1 days')].shape
 
     return(x)
 
@@ -503,7 +565,7 @@ def make_waitingtime_column(x):
     """
     print('-'*40)
     print(make_waitingtime_column)
-    x['waiting_time'] = (x['leaving_datetime'] - x['arrival_datetime']) / pd.Timedelta('1 minute')
+    x['waiting_time'] = (x['depart_datetime'] - x['arrive_datetime']) / pd.Timedelta('1 minute')
     return(x)
 
 def create_dailyED(x):
@@ -518,10 +580,10 @@ def create_dailyED(x):
     df = x
 
     def minutes_in_ED_today(x):
-        if x.arrival_datetime.date() == x.leaving_datetime.date():
+        if x.arrive_datetime.date() == x.depart_datetime.date():
             y = x.waiting_time
         else:
-            y = (24*60) - (x.arrival_datetime.hour*60 + x.arrival_datetime.minute)
+            y = (24*60) - (x.arrive_datetime.hour*60 + x.arrive_datetime.minute)
         return(y)
 
     print(df.columns)
@@ -529,8 +591,8 @@ def create_dailyED(x):
     df['minutes_today'] = df.apply(minutes_in_ED_today,axis=1)
 
     def minutes_in_ED_tomo(x):
-        if x.arrival_datetime.date() != x.leaving_datetime.date():
-            y = x.leaving_datetime.minute + x.leaving_datetime.hour*60
+        if x.arrive_datetime.date() != x.depart_datetime.date():
+            y = x.depart_datetime.minute + x.depart_datetime.hour*60
         else:
             y = 0
         return(y)
@@ -543,30 +605,30 @@ def create_dailyED(x):
         print(df[['minutes_tomo','minutes_today']].sum().sum())
         print(df['waiting_time'].sum())
 
-    # calc: arrival numbers, median age
+    # calc: arrive numbers, median age
 
-    df_gb = df[['arrival_datetime','age','minutes_today']]
+    df_gb = df[['arrive_datetime','age','minutes_today']]
 
-    agg_dic = {'arrival_datetime':'count'
+    agg_dic = {'arrive_datetime':'count'
                 ,'age':'median'
               ,'minutes_today':'sum'
               }
 
-    daily1 = df_gb.groupby(by=[df_gb['arrival_datetime'].dt.date]).agg(agg_dic)
+    daily1 = df_gb.groupby(by=[df_gb['arrive_datetime'].dt.date]).agg(agg_dic)
 
     #calc: discharges + admissions
-    df_gb = df[['leaving_datetime','age','adm_flag','minutes_tomo']]
+    df_gb = df[['depart_datetime','age','adm_flag','minutes_tomo']]
 
-    agg_dic = {'leaving_datetime':'count'
+    agg_dic = {'depart_datetime':'count'
                ,'adm_flag':'sum'
                ,'minutes_tomo':'sum'
                 }
 
-    daily2 = df_gb.groupby(by=[df_gb['leaving_datetime'].dt.date]).agg(agg_dic)
+    daily2 = df_gb.groupby(by=[df_gb['depart_datetime'].dt.date]).agg(agg_dic)
     #daily2.head()
 
     #calc: breaches counts - this should be lifted updwards!
-    df['breach_datetime'] = df.arrival_datetime + pd.Timedelta('4 hour')
+    df['breach_datetime'] = df.arrive_datetime + pd.Timedelta('4 hour')
 
     df_gb = df[['breach_datetime','breach_flag']]
 
@@ -601,7 +663,7 @@ def create_dailyED(x):
 
     # rename columns sensibly
     #daily.columns
-    daily.rename(columns={'arrival_datetime':'arrivals','leaving_datetime':'discharges','age':'age_median',
+    daily.rename(columns={'arrive_datetime':'arrivals','depart_datetime':'discharges','age':'age_median',
                          'adm_flag':'admissions','breach_flag':'breaches'},inplace=True)
     daily.head()
     daily['mean_patient_minutes'] = daily.minutes_used/daily.arrivals

@@ -26,4 +26,13 @@ our code sucessfully. To do this:
 #### to-do
 - resolve pink copy warning in create arrival_datetime columns
 - bug: ioED.loadRAW and loadCLEAN
-- question that required_cols in expected file strucutre are all required in the end! remove: arrival_date, arrival_time, 
+- question that required_cols in expected file strucutre are all required in the end! remove: arrival_date, arrival_time,
+- make check column dtypes only operate on pat, day, week cols as appropriate..(need seperate name dictionary for day data etc.)
+
+ED day: ED_arrivals', 'ED_age_median', 'ED_discharges', 'ED_admissions',
+       'ED_breaches', 'ED_minutes_used', 'ED_mean_patient_minutes',
+       'ED_conversion_ratio', 'ED_breaches_perc', 'ED_date', 'ED_year',
+       'ED_month', 'ED_dayofweek', 'ED_weekday_name'
+
+
+- _loadRAW/_loadCLEAN : make option so that ioED will only load ED files. Use select_loc = None as option?
