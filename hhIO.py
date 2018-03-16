@@ -42,7 +42,7 @@ hh.ioED.checks()
 
 ####! cut down sample size for testing
 # df = hh.ioED.get_EDraw()
-# df = df[0:500]
+# df = df[0:5000]
 # hh.ioED.replace_EDraw(df)
 
 #### problem with datetime conversion means need to specifiy dt_format of strings. Some datetimes are also not in this format - so need to tidy these. e.g. one has seconds included (but seems erroneus anyway Y1899)
@@ -56,6 +56,53 @@ hh.ioED.convert_cols_datetime(dt_format="%d/%m/%Y %H:%M")
 hh.ioED.checks()
 
 hh.ioED.create_auto_columns()
+
+hh.ioED.checks()
+
+##############################################
+#### sort out datetime columns
+df = hh.ioED.get_EDraw()
+
+## make string for datetime conversion
+def f(x):
+    y = str(x.arrive_date) + ' ' + x.first_adm_request_time
+    return y
+
+mask = ~df.first_adm_request_time.isnull() # mask select rows with adm request times
+
+df['first_adm_request_datetime'] = df[mask].apply(f,axis=1) # add date and time together to string
+print('Sizes after adm request datetime changes (~118k):')
+print(df.first_adm_request_datetime.isnull().value_counts()) # should be about 118000 rows
+
+df['first_adm_request_datetime'] = df[mask]['first_adm_request_datetime'].apply(lambda x: pd.to_datetime(x)) # convert str to datetime
+
+print(df.first_adm_request_datetime.isnull().value_counts())
+## add + 1D to all values where patient has overlapped midnight
+
+mask = (df['first_adm_request_datetime'] - df['arrive_datetime']) < pd.Timedelta(0, unit='D')
+
+df.loc[df[mask].index,'first_adm_request_datetime'] = df[mask]['first_adm_request_datetime'] + pd.Timedelta(1, unit='D')
+
+## check no cases of -ve days remain
+test = (df['first_adm_request_datetime'] - df['arrive_datetime']) < pd.Timedelta(0, unit='D')
+
+print(test.value_counts())
+
+hh.ioED.replace_EDraw(df)
+#########################################################
+
+hh.ioED.make_wait_columns()
+
+#######################################
+#### correct adm_flag to include those with specialty refferal times
+df = hh.ioED.get_EDraw()
+print('Numbers of adm_flags before and after:')
+print(df.adm_flag.value_counts())
+mask = df.first_adm_request_time.isnull()
+df.loc[df[~mask].index,'adm_flag'] = 1
+print(df.adm_flag.value_counts())
+hh.ioED.replace_EDraw(df)
+#######################################
 
 hh.ioED.checks() # check size has reduced from 233,000
 

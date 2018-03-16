@@ -303,6 +303,10 @@ class ioED(hosp):
         self._dataRAW = make_callender_columns(self._dataRAW,'arrive_datetime','arrive')
         self._dataRAW = make_callender_columns(self._dataRAW,'depart_datetime','depart')
 
+    def make_wait_columns(self):
+        """ create wait times between arr, triage,dr, etc"""
+        self._dataRAW = make_wait_columns(self._dataRAW)
+
     def create_aggregates(self):
         """ create daily, weekly and monthly transforms of data. RAW patient level data will need to be in standard format before running this is problems not to occur!
         """
@@ -430,8 +434,10 @@ def make_callender_columns(x,column,prefix):
     x[prefix + '_hour'] = x[column].dt.hour.astype(object)
     x[prefix + '_dayofweek'] = x[column].dt.dayofweek.astype(object)
     x[prefix + '_month'] = x[column].dt.month.astype(object)
+    x[prefix + '_week'] = x[column].dt.week.astype(object)
     x[prefix + '_weekday_name'] = x[column].dt.weekday_name.astype(object)
     x[prefix + '_year'] = x[column].dt.year.astype(object)
+    x[prefix + '_date'] = x[column].dt.date.astype(object)
     return(x)
 
 def pd_tidy_column_heads(x):
@@ -567,6 +573,23 @@ def make_waitingtime_column(x):
     print('-'*40)
     print(make_waitingtime_column)
     x['waiting_time'] = (x['depart_datetime'] - x['arrive_datetime']) / pd.Timedelta('1 minute')
+    return(x)
+
+def make_wait_columns(x):
+    """ creates wait columns for dataframe
+    """
+    x['arr_triage_wait'] = (x.first_triage_datetime - x.arrive_datetime) / pd.Timedelta('1 minute')
+
+    x['arr_dr_wait'] = (x.first_dr_datetime - x.arrive_datetime) / pd.Timedelta('1 minute')
+
+    x['arr_adm_req_wait'] = (x.first_adm_request_datetime - x.arrive_datetime) / pd.Timedelta('1 minute')
+
+    x['adm_req_dep_wait'] = (x.depart_datetime - x.first_adm_request_datetime) / pd.Timedelta('1 minute')
+
+    x['dr_adm_req_wait'] = (x.first_adm_request_datetime - x.first_dr_datetime) / pd.Timedelta('1 minute')
+
+    x['dr_dep_wait'] = (x.depart_datetime - x.first_dr_datetime) / pd.Timedelta('1 minute')
+
     return(x)
 
 def create_dailyED(x):
