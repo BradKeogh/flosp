@@ -431,6 +431,7 @@ def make_callender_columns(x,column,prefix):
     x[prefix + '_dayofweek'] = x[column].dt.dayofweek.astype(object)
     x[prefix + '_month'] = x[column].dt.month.astype(object)
     x[prefix + '_weekday_name'] = x[column].dt.weekday_name.astype(object)
+    x[prefix + '_year'] = x[column].dt.year.astype(object)
     return(x)
 
 def pd_tidy_column_heads(x):
