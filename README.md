@@ -1,9 +1,22 @@
 # hospital-flow
-
 Project to explore automation of hospital flow work in a scalable manner.
 
+# Aims
+- provide means to import and clean ED and inpatient hospital data quickly
+- provide standard plotting/analysis outputs
+
+# Objectives
+- create module to import/clean/impose standard format/save ED data
+- create similar for inpatient data
+- create module for standard ED plotting/analysis
+- create module for standard IP plotting/analysis
+
+
+
+
+# install
 #### to install dependencies....
-conda env create\
+conda env create
 activate hospital-flow
 
 #### installing python
@@ -19,10 +32,11 @@ our code sucessfully. To do this:
 - type: 'conda env create'
 - type: 'activate hospital-flow' ('source activate hospital-flow' in mac)
 
+# running
 #### running the script
 
 
-
+# dev
 #### to-do
 - resolve pink copy warning in create arrival_datetime columns
 - bug: ioED.loadRAW and loadCLEAN

@@ -27,7 +27,7 @@ hh_cols = {
 'INITIAL_ASSESSMENT_DTTM':'first_triage_datetime',
 'SEEN_FOR_TREATMENT_DTTM':'first_dr_datetime',
 'SPECIALTY_REQUEST_TIME':'first_adm_request_time',
-'SPECIALTY_REFERRED_TO_CODE':'adm_referral_loc',
+'SPECIALTY_REFERRED_TO_DESCRIPTION':'adm_referral_loc',
 'ADMISSION_FLAG':'adm_flag',
 'ATTENDANCE_CONCLUSION_DTTM':'depart_datetime',
 'STREAM_LOCAL_CODE':'stream'
