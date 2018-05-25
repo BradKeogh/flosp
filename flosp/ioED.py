@@ -24,10 +24,15 @@ class ioED:
     #print(basic1())
     #as _core
 
-    def __init__(self,name,path_data='./../../3_Data/'):
+    def __init__(self,name,save_path):
         self.name = name
-        self.path_data = path_data
-        pass
+        self.set_save_path(save_path)
+
+    def set_save_path(self,save_path):
+        "sets path for saving any data files to. Input,str, e.g. './../../3_Data/' "
+        save_path = _core.path_backslash_check(save_path) #ensure that path has / at end
+        self.save_path = save_path + self.name + '/' #make save_path an attribute
+        return
 
     def call_test(self):
         x = basic_tools.test_fun()
@@ -156,27 +161,35 @@ class ioED:
         self._dataRAW = x
         return
 
-    def saveRAWasCLEAN(self,path='./../../3_Data/processed/'):
+    def saveRAWasCLEAN(self,path=None):
         """ save raw df as .pkl file in the path specified.
         Use once happy that data is all clean.
+        Can specify path, but best to leave blank to allow standard naming.
         """
+        if path == None:
+            path = self.save_path # if no path given apply standard path naming.
         _core.savePKL(self._dataRAW, path, self.name + 'ED')
         return
 
-    def saveRAWasRAW(self,path='./../../3_Data/processed/RAW/'):
-        """ save raw df as .pkl file in the path specified.
+    def saveRAWasRAW(self,path=None):
+        """ save raw df as .pkl file.
+        Can specify path, but best to leave blank to allow standard naming
         Use once happy that data is all clean.
         """
+        if path == None:
+            path = self.save_path + 'RAW/' # if no path given apply standard path naming.
         _core.savePKL(self._dataRAW, path, self.name + 'ED')
         return
 
-    def loadPKLasRAW(self, path = './../../3_Data/processed/',filename = None):
+    def loadPKLasRAW(self, path = None ,filename = None):
         """
         load any pkl file as raw data for prcessing again.
         input:
         path, str, folder to pkl
-        filename, str, string of pkl file
+        filename, str, string of pkl file.
         """
+        if path == None:
+            path = self.save_path # if no path given apply standard path naming.
         if filename == None:
             filename = self.name + 'ED'
 

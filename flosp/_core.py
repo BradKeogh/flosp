@@ -89,9 +89,14 @@ def loadPKL(path,filename):
 
 def path_filename_checks(path,filename):
     """ ensure that filename and path are in particular format."""
-    if path[-1:] !='/':
-        path = path + '/'
+    path = path_backslash_check(path)
 
     if filename[-4:] != '.pkl':
         filename = filename + '.pkl'
     return(path,filename)
+
+def path_backslash_check(path):
+    """ensure that path name has a / at end """
+    if path[-1:] !='/':
+        path = path + '/'
+    return(path)
