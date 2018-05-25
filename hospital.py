@@ -14,8 +14,7 @@ class hosp(object):
         # make dict for passing down class heirarcy
         meta_info = {
         '_name': name,
-        '_pathCLEAN': './../../3_Data/processed/',
-        '_pathOUTPUT': './../../6_Outputs/',
+
         '_dataRAW_expected_dtypes':dataRAW_expected_dtypes,
         '_dataRAW_expected_cols':dataRAW_expected_cols,
         '_dataframes_list':dataframes_list
@@ -43,14 +42,7 @@ class hosp(object):
         for key, value in meta_info.items():
             setattr(self, key, value)
 
-    def _loadPKL(self, path_to,attribute_name):
-        """ find clean pkl file and load
-        input
-        path_to: str, location of pkl
-        attribute_name: str, name to store under
-        """
-        x = pd.read_pickle(path_to) # read pkl to df
-        setattr(self, attribute_name, x) # save to attribute
+
 
     def _searchFILE(self, path, filenames):
         """
@@ -122,16 +114,7 @@ class hosp(object):
                 attribute_list.append(i)
         return attribute_list
 
-    def _savePKL(self, path, attribute_list):
-        """
-        save dfs as pkls given list of attributes and path
-        """
-        for i in attribute_list:
-            df = getattr(self,i)
-            dt_period = i[7:] # get EDpat, IPday part of name
-            fullfilepath = path + self._name + dt_period + '.pkl'
-            df.to_pickle(fullfilepath)
-            print(self._name + dt_period + '.pkl')
+
 
     def get_pathCLEAN(self):
         return self._pathCLEAN
@@ -190,21 +173,7 @@ class ioED(hosp):
         print('Save complete.')
         return
 
-    def saveRAWasCLEAN(self):
-        """ save all raw files in memory as .pkl in the processed folder specified. Do once happy that data is all clean. """
-        self._dataR_EDpat = self._dataRAW #move patinet lvl data to this attribute for saving
-        print('-'*40)
-        print('Saving RAW as pkls in CLEAN folder...')
-        raw_df_list = self._searchATTRIBUTE()
-        raw_df_list.remove('_dataRAW')
-        if len(raw_df_list) == 0:
-            print('No RAW files to save.')
-        else:
-            path = self._pathCLEAN
-            self._savePKL(path,raw_df_list)
 
-        print('Save complete.')
-        return
 
 
 

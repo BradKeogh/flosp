@@ -50,3 +50,48 @@ def check_column_dtypes(df,exp_dtype_dict = None ,col_to_check = None):
             if df[j].dtypes != df_dtypes[j]:
                 print('Col ', j.ljust(25), ' is:',df[j].dtypes,'. Expected any of: ', df_dtypes[j])
     return
+
+def savePKL(df, path, filename):
+    """
+    Save df to pkl in a directory of your choice. Will generate path if not already there.
+    Inputs:
+    df, df, df to save
+    path, str, path to save to
+    filename, str, name of file
+    """
+    import os
+    #check that folder strucutre exisits - if not create
+    if os.path.isdir(path) != True:
+        os.makedirs(path)
+
+    #add / to filename if not present
+    path, filename = path_filename_checks(path,filename)
+
+    #save as pkl
+    fullfilepath = path + filename
+    df.to_pickle(fullfilepath)
+    message('saved file: ' + fullfilepath)
+    return
+
+def loadPKL(path,filename):
+    """ load pkl file from directory of your choice.
+    input
+    path, str, location of pkl
+    attribute_name: str, name to store under
+    """
+    path, filename = path_filename_checks(path,filename)
+
+    fullfilepath = path + filename
+    df = pd.read_pickle(fullfilepath) # read pkl to df
+    message('loaded file: ' + fullfilepath)
+    return(df)
+
+
+def path_filename_checks(path,filename):
+    """ ensure that filename and path are in particular format."""
+    if path[-1:] !='/':
+        path = path + '/'
+
+    if filename[-4:] != '.pkl':
+        filename = filename + '.pkl'
+    return(path,filename)

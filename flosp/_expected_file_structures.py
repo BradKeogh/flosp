@@ -3,6 +3,8 @@ dataframes_list = ['_dataR_EDpat','_dataR_EDday','_dataR_EDweek','_dataR_EDmon',
 '_dataR_IPpat','_dataR_IPday','_dataR_IPweek','_dataR_IPmon',
 '_dataRAW']
 
+clean_pkl_files = []
+
 dataRAW_expected_dtypes = {
 'dept_patid':[np.float,np.int,np.int64,np.str],
 'hosp_patid':[np.float,np.int,np.int64,np.str],

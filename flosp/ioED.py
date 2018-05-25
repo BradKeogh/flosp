@@ -24,8 +24,9 @@ class ioED:
     #print(basic1())
     #as _core
 
-    def __init__(self,name):
+    def __init__(self,name,path_data='./../../3_Data/'):
         self.name = name
+        self.path_data = path_data
         pass
 
     def call_test(self):
@@ -155,10 +156,29 @@ class ioED:
         self._dataRAW = x
         return
 
+    def saveRAWasCLEAN(self,path='./../../3_Data/processed/'):
+        """ save raw df as .pkl file in the path specified.
+        Use once happy that data is all clean.
+        """
+        _core.savePKL(self._dataRAW, path, self.name + 'ED')
+        return
 
+    def saveRAWasRAW(self,path='./../../3_Data/processed/RAW/'):
+        """ save raw df as .pkl file in the path specified.
+        Use once happy that data is all clean.
+        """
+        _core.savePKL(self._dataRAW, path, self.name + 'ED')
+        return
 
+    def loadPKLasRAW(self, path = './../../3_Data/processed/',filename = None):
+        """
+        load any pkl file as raw data for prcessing again.
+        input:
+        path, str, folder to pkl
+        filename, str, string of pkl file
+        """
+        if filename == None:
+            filename = self.name + 'ED'
 
-
-
-
-#
+        self._dataRAW = _core.loadPKL(path ,filename)
+        return
