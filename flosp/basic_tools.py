@@ -116,7 +116,7 @@ def create_datetime_from_time(df,time_col,date_col,new_col,auto_correct=True):
     import numpy as np
     import warnings
     _core.message('Create datetime column from: ' + str(time_col) +' & '+ str(date_col) )
-    
+
     # get df without nans
     df_dropna = df[[time_col,date_col]].dropna()
     # create new column

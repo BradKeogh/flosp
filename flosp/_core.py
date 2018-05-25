@@ -100,3 +100,17 @@ def path_backslash_check(path):
     if path[-1:] !='/':
         path = path + '/'
     return(path)
+
+
+def search_for_pkl(path, filename):
+    """
+    search for file at path. return true if file exists, eles return false.
+    """
+    from os.path import exists
+    if exists(path + filename):
+        print('Found: ' + path + filename)
+        exists = True
+    else:
+        print('Missing: ' + path + filename)
+        exists = False
+    return(exists)

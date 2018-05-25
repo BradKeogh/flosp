@@ -10,6 +10,10 @@ class ioED:
     """
     ioED is a tool for easy importing and cleaning of ED data. It can also enforce specific formatting which will allow the use of analyse class for standard analysis.
 
+    Input:
+    name, str, name which is used to save folders/file outputs.
+    save_path, str, specific parent directory where all output will be saved, e.g. './../../3_Data/'
+
     Workflow:
     1) load_csv: import ED csv:
     2) small_sample: optional to reduce dataset for quick movement through workflow.
@@ -29,9 +33,10 @@ class ioED:
         self.set_save_path(save_path)
 
     def set_save_path(self,save_path):
-        "sets path for saving any data files to. Input,str, e.g. './../../3_Data/' "
+        """sets path for saving any data files to. Use the parent folder, all data will be automatically placed within a 'procesed/classname/' folder.
+         Input,str, e.g. './../../3_Data/' """
         save_path = _core.path_backslash_check(save_path) #ensure that path has / at end
-        self.save_path = save_path + self.name + '/' #make save_path an attribute
+        self.save_path = save_path + 'processed/' + self.name + '/' #make save_path an attribute
         return
 
     def call_test(self):

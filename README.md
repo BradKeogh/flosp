@@ -38,5 +38,6 @@ our code sucessfully. To do this:
 
 # dev
 #### to-do
-- ioED: make pkl saving path mandatory
--
+
+- Gen: multiple instances of set_save_path method...look to make generic function.
+- Gen: create test harness

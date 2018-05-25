@@ -44,23 +44,7 @@ class hosp(object):
 
 
 
-    def _searchFILE(self, path, filenames):
-        """
-        looks for filelist matching (filename), in folder (path), if not print not found. Retunr list of founds.
-        Input
-        path: str, path to folder
-        filenames: list of str, filenames to find
-        """
-        from os.path import exists
-        avail_files = []
-        for i in filenames:
-            if exists(path + i):
-                print('Found: ',i)
-                avail_files.append(path+i)
-            else:
-                print('Missing: ', i)
 
-        return avail_files
 
     def _loadCLEAN(self,select_period = None):
         ## look for filelist, if present load, if not print not found. Retunr list of founds.
