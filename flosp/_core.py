@@ -101,6 +101,13 @@ def path_backslash_check(path):
         path = path + '/'
     return(path)
 
+def path_add_child_structure(path,to_add):
+    """ add child structure, defined only here, to the end of the path. Has call for path_backslash_check inbuilt, on both ends of child_path. """
+    path = path_backslash_check(path)
+    path = path + 'processed/' + to_add
+    path = path_backslash_check(path)
+    return(path)
+
 
 def search_for_pkl(path, filename):
     """

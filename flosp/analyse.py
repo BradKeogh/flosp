@@ -6,27 +6,44 @@ from flosp import basic_tools
 from flosp import _core
 from flosp import _expected_file_structures
 
-class analyse:
+class data():
+    """ class to store all data and meta """
+
+    def __init__(self,name,save_path,valid_years):
+        self.name = name
+        self.save_path = _core.path_add_child_structure(save_path, self.name)
+        self.valid_years = valid_years
+
+
+
+class analyse():
     """ Class to manage hospital data importing.
     Input:
-    name: str, name for class (will be used in filename saving.)
+    name, str, name for class (will be used in filename saving.)
+    save_path, str, e.g. './../../3_Data/' (must use parent folder).
+    valid_years, list, a list of the years (ints) for which there are complete records.
     """
-    def __init__(self,name,save_path):
-        self.name = name
-        self.set_save_path(save_path)
+    #from flosp.ED import ED
+    def __init__(self,name,save_path,valid_years):
+        self.data = data(name,save_path,valid_years)
+        self.ED = ED(self.data)
+        self.IP = IP(self.data)
+        self.load_processed_data()
 
-    def set_save_path(self,save_path):
-        """sets path for saving any data files to. Use the parent folder, all data will be automatically placed within a 'procesed/classname/' folder.'
-        Input,str, e.g. './../../3_Data/'
+    def set_valid_years(self, valid_years):
         """
-        save_path = _core.path_backslash_check(save_path) #ensure that path has / at end
-        self.save_path = save_path + 'processed/' + self.name + '/' #make save_path an attribute
+        Give valid years of
+        input: list, a list of the years (ints) for which there are complete records
+        """
+        self.data.valid_years = valid_years
         return
 
-    def my_func(self):
-        answer = core.core_func2()
-        print(answer)
-        return (answer)
+    def set_save_path(self,save_path):
+        """sets path for saving any data files to. Use the parent folder, all data will be automatically placed within a 'procesed/name/' folder.'
+        Input,str, e.g. './../../3_Data/'
+        """
+        self.data.save_path = _core.path_add_child_structure(save_path, self.data.name)
+        return
 
     def load_processed_data(self):
         """
@@ -37,11 +54,28 @@ class analyse:
         possible_pkls = _expected_file_structures.possible_pkls_list # get list of possible pkl files
 
         for i in possible_pkls:
-            search_filename = self.name + i #add the class instance name to file structure.
-            exists = _core.search_for_pkl(self.save_path,search_filename) # find if file exists
+            search_filename = self.data.name + i #add the class instance name to file structure.
+            exists = _core.search_for_pkl(self.data.save_path,search_filename) # find if file exists
 
             if exists == True:
-                full_path = self.save_path + search_filename
-                attribute_name = '_data' + i[:-4]
-                setattr(self, attribute_name , pd.read_pickle(full_path) ) #remove .pkl
+                full_path = self.data.save_path + search_filename
+                attribute_name = 'data' + i[:-4]
+                setattr(self.data, attribute_name , pd.read_pickle(full_path) ) #remove .pkl
         return
+
+class ED():
+    """
+    doc here
+    """
+    def __init__(self,data):
+        self._data = data
+
+    def print_hi(self):
+        print('Helllo!')
+        print(self._data.name)
+        return
+
+class IP():
+    """doc here """
+    def __init__(self,data):
+        pass
