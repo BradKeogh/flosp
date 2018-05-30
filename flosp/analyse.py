@@ -5,6 +5,7 @@ import warnings
 from flosp import basic_tools
 from flosp import _core
 from flosp import _expected_file_structures
+from flosp import _plotting
 
 class data():
     """ class to store all data and meta """
@@ -69,13 +70,24 @@ class ED():
     """
     def __init__(self,data):
         self._data = data
+        self.plot = _plotting.plotED(data)
 
     def print_hi(self):
         print('Helllo!')
         print(self._data.name)
         return
 
+    def filter():
+        """ """
+        return
+
+    def auto_plot():
+        """ calls and attempts all the known plots. Messages if there is an error creating any of them. """
+
+        return
+
 class IP():
     """doc here """
     def __init__(self,data):
+        self._data = data
         pass

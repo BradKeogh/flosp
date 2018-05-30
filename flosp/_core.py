@@ -1,4 +1,5 @@
 import pandas as pd
+#from flosp.plotting import *
 
 def message(text, size = 'l',footer=False):
     """ make output from message call """
