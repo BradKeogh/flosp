@@ -25,16 +25,21 @@ class plotED():
         df = df.query(filter_on+ " in " + str(self._data.valid_years))
         return(df)
 
-    def _autosave_fig_tables(self,df,fig_name):
+    def _autosave_fig_tables(self,df,ax,fig_name):
         """ save all figs and tables currently generated """
         path = self._data.save_path + 'ED/'
         #### ensure path exists
         _core.create_dir(path)
         fullpath = path + 'table_plots.xlsx'
 
+        #### save table
         writer  = pd.ExcelWriter(fullpath)
         df.to_excel(writer,sheet_name = fig_name)
         writer.save()
+
+        ####save figure
+        fullpath = path + fig_name + '.png'
+        ax.get_figure().savefig(fullpath,dpi=600)
         return
 
     def tab_yearly_counts(self):
@@ -58,9 +63,6 @@ class plotED():
         yearly['conversion ratio'] = 100* yearly['ED admissions'] / yearly['ED attendances']
         #### save table to self.data
 
-        #### save table to excel
-        #! make function to save - test this function
-        self._autosave_fig_tables(yearly,fig_name)
 
         #### plot table
         ax = plt.subplot()
@@ -80,5 +82,11 @@ class plotED():
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax2.legend(lines + lines2, labels + labels2, loc='lower right',frameon=True)
         #### save fig out now
+
+
+        #### save table to excel
+        #! make function to save - test this function
+        self._autosave_fig_tables(yearly,ax2,fig_name)
+
 
         return
