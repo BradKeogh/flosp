@@ -52,6 +52,14 @@ def check_column_dtypes(df,exp_dtype_dict = None ,col_to_check = None):
                 print('Col ', j.ljust(25), ' is:',df[j].dtypes,'. Expected any of: ', df_dtypes[j])
     return
 
+def create_dir(path):
+    """ check if directory path exisits. and if not create it. """
+    import os
+    #check that folder strucutre exisits - if not create
+    if os.path.isdir(path) != True:
+        os.makedirs(path)
+    return
+
 def savePKL(df, path, filename):
     """
     Save df to pkl in a directory of your choice. Will generate path if not already there.
@@ -60,10 +68,7 @@ def savePKL(df, path, filename):
     path, str, path to save to
     filename, str, name of file
     """
-    import os
-    #check that folder strucutre exisits - if not create
-    if os.path.isdir(path) != True:
-        os.makedirs(path)
+    create_dir(path)
 
     #add / to filename if not present
     path, filename = path_filename_checks(path,filename)
