@@ -41,3 +41,4 @@ our code sucessfully. To do this:
 
 - Gen: multiple instances of set_save_path method...look to make generic function.
 - Gen: create test harness
+- _plotting.plotED: is a mess. Needs refactoring. Many repeated functions that could be made generic.
