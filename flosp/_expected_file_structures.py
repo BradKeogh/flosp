@@ -5,6 +5,7 @@ dataRAW_expected_dtypes = {
 'dept_patid':[np.float,np.int,np.int64,np.str],
 'hosp_patid':[np.float,np.int,np.int64,np.str],
 'age':[np.int,np.int64],
+'age_group':[np.str, 'pandas category type'],
 'gender':[np.object],
 'site':[np.object],
 'arrive_date':[np.object],
@@ -56,6 +57,7 @@ dataRAW_expected_dtypes = {
 dataRAW_expected_cols = {
 'hosp_patid':'',
 'age':'check column name',
+'age_group':'use make_age_group_column',
 'gender':'',
 'arrive_datetime':'use ',
 'arrive_mode':'',

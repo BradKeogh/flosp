@@ -6,18 +6,26 @@ import matplotlib.pyplot as plt
 
 from flosp import _core
 
+class fig_tables():
+    """ class to store all plot table data """
+    def __init__(self):
+        pass
+
+class fig_plot():
+    """ class to store all plot table data """
+    def __init__(self):
+        pass
+
+
 class plotED():
     """ class containts all plotting """
     def __init__(self,data):
         self._data = data
+        self._fig_tables = fig_tables()
+        self._fig_plot = fig_plot()
         print(self)
         print(self._data)
         print(self._data)
-
-    def plot1(self):
-        print('plotting 1')
-        print(self._data)
-        return
 
     def _filter_years(self,df,filter_on = 'arrive_year'):
         """ takes data frame and returns df with only valid years in arrive_date. input: filter_on, str, column name """
@@ -40,20 +48,28 @@ class plotED():
 
         return(df_clean)
 
-    def _autosave_fig_tables(self,df,ax,fig_name):
+    def _autosave_fig_tables(self,fig_name):
         """ save all figs and tables currently generated """
         path = self._data.save_path + 'ED/'
         #### ensure path exists
         _core.create_dir(path)
         fullpath = path + 'table_plots.xlsx'
 
-        #### save table
+        #### save table -
         writer  = pd.ExcelWriter(fullpath)
-        df.to_excel(writer,sheet_name = fig_name)
+        # loop through each table that exists
+        mylist = dir(self._fig_tables)
+        mylist = [x for x in mylist if not x.startswith('__')]
+        for i in mylist:
+            df = getattr(self._fig_tables,i)
+            df.to_excel(writer,sheet_name = i)
+
+        # save all tables to file
         writer.save()
 
         ####save figure
         fullpath = path + fig_name + '.png'
+        ax = getattr(self._fig_plot, fig_name)
         ax.get_figure().savefig(fullpath,dpi=600)
         return
 
@@ -146,7 +162,7 @@ class plotED():
         return
 
     def bar_att_adm_no(self):
-        """ reporoduce atten and admission bar plot """
+        """ reporoduce atten and admission no.s bar plot """
         #### get data
         df = self._data.dataED
         fig_name  = 'fig1'
@@ -179,6 +195,38 @@ class plotED():
         ax2.legend(lines + lines2, labels + labels2, loc='lower right',frameon=True)
 
         #### save table to excel
-        #! make function to save - test this function
-        self._autosave_fig_tables(yearly,ax2,fig_name)
+        self._fig_tables.fig1 = yearly
+        self._fig_plot.fig1 = ax2
+        self._autosave_fig_tables(fig_name)
+        return
+
+    def bar_age_split(self):
+        """ bar chart with age split over different years """
+        df_att = self._data.dataED
+        df_att = self._filter_years(df_att)
+
+        def plot1(df,fig_name):
+            "make bar plot & save"
+
+            ax = plt.subplot()
+            df2 = df.groupby(['arrive_year','age_group']).count()['hosp_patid'].unstack()
+            df2.plot(kind='bar',ax=ax);
+            ax.set_ylabel('ED attendances (yearly)');
+            ax.set_xlabel('year');
+            ax.legend(title = 'age group',frameon=True,loc='lower right');
+
+            # save fig
+            setattr(self._fig_tables,fig_name,df2)
+            setattr(self._fig_plot,fig_name,ax)
+            self._autosave_fig_tables(fig_name)
+            return
+
+        # plot for atendances
+        plot1(df_att,'fig2a')
+
+        #plot for admissions
+        df_adm = df_att[df_att.adm_flag == 1]
+        plot1(df_adm,'fig2b')
+
+
         return

@@ -74,6 +74,7 @@ class ioED:
         self.make_callender_columns()
         self.make_wait_columns()
         self.make_breach_columns()
+        self.make_age_group_column()
         return
 
     def map_columns(self, col_mapping, tidy_up_cols = False):
@@ -124,6 +125,24 @@ class ioED:
         import pandas as pd
         self._dataRAW['breach_flag'] = (self._dataRAW['waiting_time'] > 4*60).astype(int)
         self._dataRAW['breach_datetime'] = self._dataRAW['arrive_datetime'] + pd.Timedelta(4,unit='h')
+        return
+
+    def make_age_group_column(self, bins = None, labels= None):
+        """ add additional column called age_group.
+        input:
+        bins, lst of int, bin edges e.g. [-1, 18, 65,200]
+        labels, lst of str, labels for groups e.g. ["0-17", "18-64", "65+"]
+        """
+        df = self._dataRAW
+
+        ### use standard bins/labels if none provided
+        if (bins == None) & (labels == None):
+            bins = [-1, 18, 65,200]
+            labels = ["0-17", "18-64", "65+"]
+
+        df['age_group'] = pd.cut(df.age, bins=bins, right=False, labels=labels)
+
+        self._dataRAW = df
         return
 
 
