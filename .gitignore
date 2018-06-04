@@ -3,6 +3,7 @@
 hh(ED_slide_packs_code)/
 hhft/
 pmth/
+processed/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
