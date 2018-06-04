@@ -34,7 +34,8 @@ our code sucessfully. To do this:
 
 # running
 #### running the script
-
+see examples of how to use in:
+example_flosp_workflow.ipynb
 
 # dev
 #### to-do
