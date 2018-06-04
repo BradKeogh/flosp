@@ -89,7 +89,7 @@ def make_callender_columns(df,column,prefix):
     Output
     df, df: new df with additional columns with numerical indicators for callender vars.
     """
-    _core.message(make_callender_columns)
+    _core.message('Making callender columns from:  ' + column)
     df[prefix + '_hour'] = df[column].dt.hour.astype(int)
     df[prefix + '_dayofweek'] = df[column].dt.dayofweek.astype(int)
     df[prefix + '_month'] = df[column].dt.month.astype(int)
