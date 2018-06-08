@@ -16,6 +16,7 @@ class timeseries():
         Output: df, with timeseries index with counts of events for each period.
         """
         import pandas as pd
+        import numpy as np
         from flosp import basic_tools
 
         #### set default vals if none given
@@ -27,7 +28,10 @@ class timeseries():
             #### get list to interate if a split column is given
             cols_clean = {}
             for i in df[col_to_split].unique():
-                j = basic_tools.tidy_string(i)
+                if type(i) == np.str:
+                    j = basic_tools.tidy_string(i)
+                else:
+                    j = i
                 cols_clean[i] = j
 
         #### create new df with timeseries index
