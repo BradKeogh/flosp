@@ -132,3 +132,21 @@ def create_datetime_from_time(df,time_col,date_col,new_col,auto_correct=True):
             warnings.warn(str(datetime_values.shape[0]) + ' patients detected who have -ve wait times. They have probably rolled over midnight, so we add + 1day to the new datetime column created. This assumes < 24hr stays only.\n\n\n')
             df.loc[datetime_values.index,new_col] = datetime_values.values
     return(df)
+
+def tidy_string(i):
+    """ take string and return new string without any confusing chaars"""
+
+    #j = i.lower()
+    j = i.strip()
+    j = j.replace(' ','_')
+    j = j.replace('.','_')
+    j = j.replace('?','_')
+    j = j.replace('&','_')
+    j = j.replace('%','perc')
+    j = j.replace('(','')
+    j = j.replace(')','')
+    j = j.replace(':','')
+    j = j.replace(';','')
+    j = j.replace('-','')
+    j = j.replace('/','')
+    return(j)
