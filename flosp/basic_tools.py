@@ -1,4 +1,5 @@
 from flosp import _core
+from flosp.timeseries import timeseries
 
 def test_fun():
     """ serves no purpose other than debugging """

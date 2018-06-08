@@ -1,5 +1,5 @@
 import numpy as np
-possible_pkls_list = ['ED.pkl','NOTAPICKLE.pkl']
+possible_pkls_list = ['ED.pkl','IPfce.pkl','IPward.pkl','IPspell.pkl']
 
 dataRAW_expected_dtypes = {
 'dept_patid':[np.float,np.int,np.int64,np.str],

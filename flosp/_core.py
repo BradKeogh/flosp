@@ -127,3 +127,35 @@ def search_for_pkl(path, filename):
         print('Missing: ' + path + filename)
         exists = False
     return(exists)
+
+def create_spell_from_multimove(df,col_move_no='move_no' ):
+    """ take df with fce or ward level records, i.e. each line is a seperate fce or ward stay, and produce a spell level df, i.e. each line is a patient spell/hospital stay.
+    Input: df, df, @ fce or ward level; col_move_no, str, name of column to group stay on. """
+    df2 = df.sort_values(['hosp_patid','adm_datetime',col_move_no]).reset_index(drop=True).copy()
+
+    df2['move_name_dis'] = df2[col_move_no]
+
+    aggs = {col_move_no:len,'move_name':'first','move_name_dis':'last'}
+
+    df_gb = df2.groupby(['hosp_patid','adm_datetime']).agg(aggs)
+
+    df_gb.reset_index(inplace=True)
+
+    addit_cols  = ['hosp_patid','adm_datetime','admission_type','spel_los','gender','site','age_group','age','move_no',
+                   'adm_year','adm_month','adm_dayofweek','adm_dayofweek_name','adm_flag_wkend',
+                   'dis_hour', 'dis_dayofweek','dis_month', 'dis_week', 'dis_dayofweek_name', 'dis_year','dis_datetime']
+
+    df_addit = df[addit_cols].groupby(['hosp_patid','adm_datetime']).first()
+
+    df_addit = df[addit_cols].query('move_no == 1')
+
+    df_addit.reset_index(inplace=True)
+
+    df_addit.drop(col_move_no,axis=1,inplace=True)
+
+    dfspel = df_gb.merge(df_addit,on=['hosp_patid','adm_datetime'])
+
+    dfspel.rename(columns={col_move_no:'move_total','move_name':'adm_loc','move_name_dis':'dis_loc'},inplace=True)
+
+    dfspel.drop('index',axis=1,inplace=True)
+    return(dfspel)

@@ -6,30 +6,12 @@ from flosp import basic_tools
 from flosp import _core
 from flosp import _expected_file_structures
 
-class ioED:
+class ioIP:
+    """ ioIP is a tool for easy importing and cleaning of ED data. It can also enforce specific formatting which will allow the use of analyse class for standard analysis.
     """
-    ioED is a tool for easy importing and cleaning of ED data. It can also enforce specific formatting which will allow the use of analyse class for standard analysis.
-
-    Input:
-    name, str, name which is used to save folders/file outputs.
-    save_path, str, specific parent directory where all output will be saved, e.g. './../../3_Data/'
-
-    Workflow:
-    1) load_csv: import ED csv:
-    2) small_sample: optional to reduce dataset for quick movement through workflow.
-    3) autoclean: uses methods that are all available to user but attempts them sequentially.
-        - errors wil prompt you to adress issues manually.
-    2) use tools/manually transform df to standard columns types (use checks method).
-    3) create daily and with:
-    4) save as RAW to stage changes at any time: saveRAWasRAW
-    5) once cleaned: saveRAWasCLEAN (files will then autoload in other parts of hospital class)
-    """
-    #from flosp.tools_basic import basic1
-    #print(basic1())
-    #as _core
-
-    def __init__(self,name,save_path):
+    def __init__(self,name,save_path,stay='fce'):
         self.name = name
+        self._stay = stay
         self.set_save_path(save_path)
 
     def set_save_path(self,save_path):
@@ -44,6 +26,8 @@ class ioED:
         df = pd.read_csv(path_to, low_memory=False,nrows=nrows)
         self._dataRAW = df
         return
+
+
 
     def small_sample(self, size = 1000):
         """
@@ -102,25 +86,11 @@ class ioED:
         """
         create additional arrival and depart columns with: arrive_hour,depart_dayofweek etc.
         """
-        self._dataRAW = basic_tools.make_callender_columns(self._dataRAW,'arrive_datetime','arrive')
-        self._dataRAW = basic_tools.make_callender_columns(self._dataRAW,'depart_datetime','depart')
+        self._dataRAW = basic_tools.make_callender_columns(self._dataRAW,'adm_datetime','adm')
+        self._dataRAW = basic_tools.make_callender_columns(self._dataRAW,'dis_datetime','dis')
         return
 
-    def make_wait_columns(self):
-        """
-        create additional columns with waiting times in minutes. Requires standard column names to generate.
-        """
-        self._dataRAW = _core.make_wait_columns(self._dataRAW)
-        return
 
-    def make_breach_columns(self):
-        """
-        make new columns of breach flag and breach datetime. Requires: waiting_time column in minutes.
-        """
-        import pandas as pd
-        self._dataRAW['breach_flag'] = (self._dataRAW['waiting_time'] > 4*60).astype(int)
-        self._dataRAW['breach_datetime'] = self._dataRAW['arrive_datetime'] + pd.Timedelta(4,unit='h')
-        return
 
     def make_age_group_column(self, bins = None, labels= None):
         """ add additional column called age_group.
@@ -153,21 +123,6 @@ class ioED:
         self._dataRAW = basic_tools.create_datetime_from_time(self._dataRAW,time_col,date_col,new_col)
         return
 
-    def run_tests(self):
-        """
-        Tests to see if raw data is in standard format.
-        """
-        # check all columns are in RAW df
-        _core.message('Finding missing columns...','m')
-        for i in _expected_file_structures.dataRAW_expected_cols:
-            if i not in self._dataRAW.columns:
-                #print missing column & mesaage comment
-                print(i,'try using: ',_expected_file_structures.dataRAW_expected_cols[i])
-
-        # check all column datatypes
-        _core.message('Finding columns with wrong datatypes...','m')
-        _core.check_column_dtypes(self._dataRAW,exp_dtype_dict = _expected_file_structures.dataRAW_expected_dtypes ,col_to_check = None)
-        return
 
 
     def get_EDraw(self):
@@ -187,7 +142,10 @@ class ioED:
         """
         if path == None:
             path = self.save_path # if no path given apply standard path naming.
-        _core.savePKL(self._dataRAW, path, self.name + 'ED')
+        _core.savePKL(self._dataRAW, path, self.name + 'IP' + self._stay)
+
+        if hasattr(self,'_dataRAWspell') == True:
+            _core.savePKL(self._dataRAWspell, path, self.name + 'IP' + 'spell')
         return
 
     def saveRAWasRAW(self,path=None):
@@ -197,7 +155,10 @@ class ioED:
         """
         if path == None:
             path = self.save_path + 'RAW/' # if no path given apply standard path naming.
-        _core.savePKL(self._dataRAW, path, self.name + 'ED')
+        _core.savePKL(self._dataRAW, path, self.name + 'IP' + self._stay)
+
+        if hasattr(self,'_dataRAWspell') == True:
+            _core.savePKL(self._dataRAWspell, path, self.name + 'IP' + 'spell')
         return
 
     def loadPKLasRAW(self, path = None ,filename = None):
@@ -210,7 +171,15 @@ class ioED:
         if path == None:
             path = self.save_path # if no path given apply standard path naming.
         if filename == None:
-            filename = self.name + 'ED'
+            filename = self.name + 'IP' + self._stay
 
         self._dataRAW = _core.loadPKL(path ,filename)
+
+        return
+
+    def create_spell_df(self):
+        """ create spell records from fce or ward level record: i.e. each line is a seperate fce or ward stay. in new spell level df, i.e. each line is a patient spell/hospital stay.
+        """
+        _core.message('Creating spell dataframe...could take 10minutes or more depending on size of data set.')
+        self._dataRAWspell = _core.create_spell_from_multimove(self._dataRAW)
         return
