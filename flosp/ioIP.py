@@ -48,12 +48,14 @@ class ioIP:
         - ensure columns are of expected formats, if not attempt conversions
         - convert all datetimes
         - clean column names (in case has additional columns?)
+        - apply filters: such as removing birth admissions.
         """
         #! implement method as series of other method calls...use jupyter notebook as guide for order.
         self.make_callender_columns()
         self.make_wait_columns()
         self.make_breach_columns()
         self.make_age_group_column()
+        self.apply_filers()
         return
 
     def map_columns(self, col_mapping, tidy_up_cols = False):
@@ -182,4 +184,14 @@ class ioIP:
         """
         _core.message('Creating spell dataframe...could take 10minutes or more depending on size of data set.')
         self._dataRAWspell = _core.create_spell_from_multimove(self._dataRAW)
+        return
+
+    def apply_filters(self):
+        """ applies filters to remove some casesthat are not of interest. """
+        df = self._dataRAW
+
+        # remove baby birth admissions
+        query = "admission_method not in ['The birth of a baby in this Health Care Provider','Baby born at home as intended','Baby born outside the Health Care Provider except when born at home as intended.']"
+        df = df.query(query)
+        self._dataRAW = df
         return
