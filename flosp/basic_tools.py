@@ -93,6 +93,7 @@ def make_callender_columns(df,column,prefix):
     _core.message('Making callender columns from:  ' + column)
     df[prefix + '_hour'] = df[column].dt.hour.astype(int)
     df[prefix + '_dayofweek'] = df[column].dt.dayofweek.astype(int)
+    df[prefix + '_day'] = df[column].dt.day.astype(int)
     df[prefix + '_month'] = df[column].dt.month.astype(int)
     df[prefix + '_week'] = df[column].dt.week.astype(int)
     df[prefix + '_dayofweek_name'] = df[column].dt.weekday_name.astype(str)

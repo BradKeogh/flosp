@@ -141,9 +141,11 @@ def create_spell_from_multimove(df,col_move_no='move_no' ):
 
     df_gb.reset_index(inplace=True)
 
-    addit_cols  = ['hosp_patid','adm_datetime','admission_type','spel_los','gender','site','age_group','age','move_no',
-                   'adm_year','adm_month','adm_dayofweek','adm_dayofweek_name','adm_flag_wkend',
-                   'dis_hour', 'dis_dayofweek','dis_month', 'dis_week', 'dis_dayofweek_name', 'dis_year','dis_datetime']
+    ##### list columns to add after the groupby
+    addit_cols  = ['hosp_patid','adm_datetime','admission_method','admission_type','spel_los','gender','site','age_group','age','move_no',
+                   'adm_year','adm_month','adm_dayofweek','adm_dayofweek_name','adm_flag_wkend','adm_hour', 'adm_day','adm_week','adm_date','adm_flag_wkend',
+                   'dis_hour', 'dis_dayofweek','dis_month', 'dis_week', 'dis_dayofweek_name', 'dis_year','dis_datetime',
+                   'dis_destination', 'dis_method', 'dis_day','dis_date', 'dis_flag_wkend']
 
     df_addit = df[addit_cols].groupby(['hosp_patid','adm_datetime']).first()
 
