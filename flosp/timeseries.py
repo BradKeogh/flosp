@@ -4,6 +4,8 @@ class timeseries():
 
     def create_timeseries_from_events(df, col_start, col_end, col_to_split=None, start=None, end=None,freq='H'):
         """
+        Takes event based df and creates a df with dt index with counts of events in each time period.
+        
         Input:
         df, df, with event data
         col_start, str, column name with datetime of the start of the event

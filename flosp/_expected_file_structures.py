@@ -1,5 +1,5 @@
 import numpy as np
-possible_pkls_list = ['ED.pkl','IPfce.pkl','IPward.pkl','IPspell.pkl']
+possible_pkls_list = ['ED.pkl','IPfce.pkl','IPward.pkl','IPspell.pkl','HOURLY.pkl']
 
 dataRAW_expected_dtypes = {
 'dept_patid':[np.float,np.int,np.int64,np.str],
@@ -41,7 +41,7 @@ dataRAW_expected_dtypes = {
 'depart_day':[np.int],
 'waiting_time':[np.float],
 'breach_flag':[np.int],
-'adm_flag':[np.int],
+'adm_flag':[np.int,np.int64,np.int64],
 'stream':[np.float,np.int,np.int64,np.str],
 'minutes_today':[np.int],
 'minutes_tomo':[np.int],
