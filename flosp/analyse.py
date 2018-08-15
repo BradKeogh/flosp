@@ -60,7 +60,7 @@ class analyse():
 
             if exists == True:
                 full_path = self.data.save_path + search_filename
-                attribute_name = 'data' + i[:-4]
+                attribute_name = i[:-4]
                 setattr(self.data, attribute_name , pd.read_pickle(full_path) ) #remove .pkl
         return
 
