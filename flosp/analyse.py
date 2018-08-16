@@ -78,7 +78,7 @@ class analyse():
 
         # make agg cols
         occIP['IPocc_total'] = occIP.sum(axis=1)
-        occIP['IPocc_nonday'] = occIP[['IPocc_NonElective','IPocc_Elective']].sum(axis=1)
+        occIP['IPocc_elec_nonelec'] = occIP[['IPocc_NonElective','IPocc_Elective']].sum(axis=1)
 
         #### Get ED occ
         #total + those who will be admitted
@@ -118,6 +118,9 @@ class analyse():
         dis_counts = get_adm_counts_dfs(self.data.IPspell,'dis',query_list,label_list,'IPdis')
         mast = mast.merge(pd.DataFrame(dis_counts),left_index=True,right_index=True,how='outer')
 
+        mast['IPadm_elec_nonelec'] = mast.IPadm_elective + mast.IPadm_nonelec
+        mast['IPdis_elec_nonelec'] = mast.IPdis_elective + mast.IPdis_nonelec
+
         #### get ED arrivals/dis
         #arrivals
         query_list = ['breach_flag == 1','adm_flag == 1']
@@ -140,10 +143,73 @@ class analyse():
         #new_index = pd.date_range(start=start,end=end,freq='H')
         #hh.data.hourly.reindex(new_index)
 
-        self.data.hourly = mast
+        #### create datetime columns information
+        mast['datetime'] = mast.index
+        mast = basic_tools.make_callender_columns(mast,'datetime','dt')
 
-        _core.savePKL(self.data.hourly,self.data.save_path,self.data.name + 'HOURLY.pkl')
+        #### save new hourly df out
+        self.data.HOURLY = mast
 
+        _core.savePKL(self.data.HOURLY,self.data.save_path,self.data.name + 'HOURLY.pkl')
+
+        return
+
+    def create_status_daily(self):
+        """creates a df with daily status of the hopsital """
+        #### make daily summary from hourly status
+        occH = self.data.HOURLY.copy() # copy requiered as oterhwise edits go back to .data.HOURLY!
+        # make copies of cols for max/mean groupings
+        occH['IPocc_total2'] = occH['IPocc_total']
+        occH['IPocc_elec_nonelec2'] = occH['IPocc_elec_nonelec']
+        #define aggregations for each col
+        aggs={'EDarrive':'sum',
+              'IPadm_elec_nonelec':'sum',
+              'IPdis_elec_nonelec':'sum',
+              'IPocc_total':'mean',
+              'IPocc_total2':'max',
+              'IPocc_elec_nonelec':'mean',
+              'IPocc_elec_nonelec2':'max'
+             }
+        #group cols
+        occD = occH.groupby(['dt_year','dt_month','dt_day']).agg(aggs).reset_index()
+
+        occD['IPadm_minus_dis_elec_nonelec'] = occD.IPadm_elec_nonelec - occD.IPdis_elec_nonelec
+
+        occD.rename(columns={'IPocc_total2':'IPocc_total_MAX',
+        'IPocc_total':'IPocc_total_MEAN',
+                             'IPocc_elec_nonelec':'IPocc_elec_nonelec_MEAN',
+                            'IPocc_elec_nonelec2':'IPocc_elec_nonelec_MAX'},inplace=True)
+
+        daily_IP1 = occD.copy()
+
+        #### make pre12hours discharge summaries
+        daily_IP2 = self.data.IPspell.query('dis_hour <= 12 & admission_type != "Day Case"').groupby(['dis_year','dis_month','dis_day']).count()['hosp_patid'].reset_index()
+
+        daily_IP2.rename(columns={'hosp_patid':'IPdis_pre12_elec_nonelec','dis_year':'dt_year','dis_month':'dt_month','dis_day':'dt_day'},inplace=True)
+
+        #### make ED daily counts
+        aggs={'hosp_patid':'count','breach_flag':'sum','adm_flag':'sum'}
+        daily_ed = self.data.ED.groupby(['arrive_year','arrive_month','arrive_day']).agg(aggs).reset_index()
+
+        daily_ed.rename(columns={'arrive_year':'dt_year',
+        'arrive_month':'dt_month',
+        'arrive_day':'dt_day',
+        'hosp_patid':'ED_attendances',
+        'breach_flag':'ED_breaches',
+        'adm_flag':'ED_admissions'},inplace=True)
+
+        #### merge the three df created
+        mast = daily_IP1.merge(daily_IP2,on=['dt_year','dt_month','dt_day'])
+        mast = daily_ed.merge(mast,on=['dt_year','dt_month','dt_day'])
+
+        #### amke timeseries index
+        mast['dt'] = mast.apply(lambda x : pd.datetime(int(x.dt_year),int(x.dt_month),int(x.dt_day)) ,axis=1)
+
+        mast.set_index('dt',inplace=True)
+
+        #### save data out
+        self.data.DAILY = mast
+        _core.savePKL(self.data.DAILY,self.data.save_path,self.data.name + 'DAILY.pkl')
         return
 
 class ED():
@@ -153,11 +219,6 @@ class ED():
     def __init__(self,data):
         self._data = data
         self.plot = _plotting.plotED(data)
-
-    def print_hi(self):
-        print('Helllo!')
-        print(self._data.name)
-        return
 
     def filter():
         """ """
