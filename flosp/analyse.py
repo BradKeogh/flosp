@@ -71,10 +71,12 @@ class analyse():
 
         #### Get IP occ
         occIP = basic_tools.timeseries.create_timeseries_from_events(self.data.IPspell,'adm_datetime','dis_datetime',col_to_split='admission_type',start=start,end=end,freq='H')
-
+        print(occIP.columns)
         # rename cols
         for i in occIP.columns:
-            occIP.rename(columns={i:'IPocc_' + i},inplace=True)
+            print(i)
+            #i = str(i)
+            occIP.rename(columns={i:'IPocc_' + str(i)},inplace=True)
 
         # make agg cols
         occIP['IPocc_total'] = occIP.sum(axis=1)
@@ -248,6 +250,8 @@ def count_numbers_byhour(df,prefix,new_col='counts'):
     adm_counts = df.groupby([prefix+'_year',prefix+'_month',prefix+'_day',prefix+'_hour']).count()['hosp_patid'].reset_index()
 
     adm_counts.rename(columns={'hosp_patid':new_col},inplace=True)
+
+    adm_counts = adm_counts.astype('int') # inc as error occuring because sometimes float
 
     def make_datetime(x):
         y = pd.datetime(x[prefix+'_year'],x[prefix+'_month'],x[prefix+'_day'],x[prefix+'_hour'])

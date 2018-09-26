@@ -1,5 +1,6 @@
 from flosp import _core
 from flosp.timeseries import timeseries
+import warnings
 
 def test_fun():
     """ serves no purpose other than debugging """
@@ -91,14 +92,22 @@ def make_callender_columns(df,column,prefix):
     df, df: new df with additional columns with numerical indicators for callender vars.
     """
     _core.message('Making callender columns from:  ' + column)
-    df[prefix + '_hour'] = df[column].dt.hour.astype(int)
-    df[prefix + '_dayofweek'] = df[column].dt.dayofweek.astype(int)
-    df[prefix + '_day'] = df[column].dt.day.astype(int)
-    df[prefix + '_month'] = df[column].dt.month.astype(int)
-    df[prefix + '_week'] = df[column].dt.week.astype(int)
-    df[prefix + '_dayofweek_name'] = df[column].dt.weekday_name.astype(str)
-    df[prefix + '_year'] = df[column].dt.year.astype(int)
-    df[prefix + '_date'] = df[column].dt.date.astype(object)
+
+    dft = df # needed for cases which do not have missing datetime values
+
+    if df[column].isnull().sum() != 0:
+        warnings.warn('Some datetimes in your column are missing.')
+        dft = df[df[column].notnull()] # create ref of df without rows that contain missing vals
+
+
+    df[prefix + '_hour'] = dft[column].dt.hour.astype(int)
+    df[prefix + '_dayofweek'] = dft[column].dt.dayofweek.astype(int)
+    df[prefix + '_day'] = dft[column].dt.day.astype(int)
+    df[prefix + '_month'] = dft[column].dt.month.astype(int)
+    df[prefix + '_week'] = dft[column].dt.week.astype(int)
+    df[prefix + '_dayofweek_name'] = dft[column].dt.weekday_name.astype(str)
+    df[prefix + '_year'] = dft[column].dt.year.astype(int)
+    df[prefix + '_date'] = dft[column].dt.date.astype(object)
     df[prefix + '_flag_wkend'] = (df[prefix + '_dayofweek'] > 5).astype(int)
     return(df)
 
