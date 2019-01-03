@@ -1,6 +1,8 @@
-import flosp 
+from flosp import Interface 
 
-a = interface.flosp_class()
+h = Interface()
 # a = interface.flosp_class()
 
-a.load_data()
+h.load_data()
+
+print(h.data)

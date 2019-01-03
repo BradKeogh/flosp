@@ -1,37 +1,33 @@
-class flosp_class:
+from flosp.data import Data
+
+class Interface:
     """
-    class which all methods work through
+    class which contains all actions (methods) available to user.
     """
     def __init__(self):
-        #self#.name = 'Bill'
         print('created_flosp')
-        self._data = data()
+        self.data = Data()
         pass
     
     def load_data(self):
-        load_data_class()
         pass
 
-    def process_data(self):
+    def run_checks(self):
+        """An output of current status of flosp analysis, including:
+        - Prints current status of data 
+        - Gives summary of errors
+        """
+        pass
+
+    def make_new_tables(self):
+        """Create all aggregate tables possible i.e. houlry and daily tables """
+        pass
+
+    def extract_data(self):
+        """ extract dataframe for user manipulation """
         pass
 
     def plot(self):
+        """ Plot all graphs and tables possible with current analysis """ 
         pass
 
-
-class load_data_class:
-    """
-    loading data class
-    """
-    def __init__(self,other):
-        print('load_data')
-        pass
-
-class data:
-    """
-    class where all data is stored
-    """
-    def __init__(self):
-        self.list_of_data = []
-        self.dfA = 'dfA'
-        pass
