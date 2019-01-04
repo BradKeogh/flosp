@@ -1,8 +1,9 @@
 from flosp import Interface 
 
-h = Interface()
+H = Interface("./example/setup.py")
 # a = interface.flosp_class()
 
-h.load_data()
+#h.load_data()
 
-print(h.data)
+print(H.data)
+print(H.metadata.setup_file_path)

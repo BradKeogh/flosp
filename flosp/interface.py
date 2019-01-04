@@ -1,12 +1,17 @@
 from flosp.data import Data
+from flosp.data import MetaData
 
 class Interface:
     """
     class which contains all actions (methods) available to user.
     """
-    def __init__(self):
-        print('created_flosp')
+    def __init__(self,setup_file_path):
+        print('flosp started.')
+        
         self.data = Data()
+        self.metadata = MetaData(setup_file_path)
+
+        
         pass
     
     def load_data(self):
