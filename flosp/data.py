@@ -11,3 +11,9 @@ class Data:
 
 
 #### Default data structures expected
+
+class MetaData:
+    """import and stores metadata for processing
+    """
+    pass
+
