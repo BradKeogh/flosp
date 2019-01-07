@@ -37,7 +37,7 @@ def test():
 # of new classes each time call method?, https://docs.python.org/3/library/unittest.html#basic-example 
 import unittest
 
-class WidgetTestCase(unittest.TestCase):
+class InterfaceTestCase(unittest.TestCase):
     def setUp(self):
         self.inst = Interface('./setup.py')
 
@@ -46,13 +46,19 @@ class WidgetTestCase(unittest.TestCase):
         # self.assertEqual(self.widget.size(), (50,50),
                         #  'incorrect default size')
 
-    def test_LoadData(self):
+class LoadDataTestCase(unittest.TestCase):
+    def setUp(self):
+        self.inst = Interface('./setup.py')
         self.inst.load_data()
 
-    # def test_widget_resize(self):
-    #     self.widget.resize(100,150)
-    #     self.assertEqual(self.widget.size(), (100,150),
-    #                      'wrong size after resize')
+    def test_Instantiation(self):
+        from flosp.data import Data, MetaData
+        self.assertIsInstance(self.inst.data,Data)
+        self.assertIsInstance(self.inst.metadata,MetaData)
+        # self.assertEqual(self.widget.size(), (50,50),
+
+
+##############################################################
 
 # def test_subtract():
 #     assert subtract(5,3) == 2
