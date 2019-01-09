@@ -1,7 +1,33 @@
 import numpy as np
 possible_pkls_list = ['ED.pkl','IPfce.pkl','IPward.pkl','IPspell.pkl','HOURLY.pkl','DAILY.pkl']
 
-dataRAW_expected_dtypes = {
+dataRAW_expected_col_dtypes = {
+'PSEUDONYMISED_PATIENT_ID':str,
+'PSEUDONYMISED_PATIENT_ID':str,
+'AGE_AT_ARRIVAL':int,
+'GENDER_NATIONAL_DESCRIPTION':str,
+'SITE':str,
+'ARRIVAL_DTTM':object,
+'ARRIVAL_MODE_NATIONAL_CODE':str,
+'INITIAL_ASSESSMENT_DTTM':object,
+'SEEN_FOR_TREATMENT_DTTM':object,
+'SPECIALTY_REQUEST_TIME':object,
+'SPECIALTY_REFERRED_TO_DESCRIPTION':str,
+'ADMISSION_FLAG':str,
+'ATTENDANCE_CONCLUSION_DTTM':object,
+'STREAM_LOCAL_CODE':str,
+}
+
+dataRAW_expected_datetime_cols = [
+    'ARRIVAL_DTTM',
+    'INITIAL_ASSESSMENT_DTTM',
+    'SEEN_FOR_TREATMENT_DTTM',
+#    'SPECIALTY_REQUEST_TIME',
+    'ATTENDANCE_CONCLUSION_DTTM',
+]
+
+
+dataRAW_expected_dtypes2 = {
 'dept_patid':[np.float,np.int,np.int64,np.str],
 'hosp_patid':[np.float,np.int,np.int64,np.str],
 'age':[np.int,np.int64],

@@ -2,20 +2,20 @@ from flosp.data import Data
 from flosp.data import MetaData
 
 class Interface:
+    """ Class which contains all actions (methods) available to user.
     """
-    class which contains all actions (methods) available to user.
-    """
-    def __init__(self,setup_file_path):
+
+
+    def __init__(self,setup_file_path = './setup.py'):
         print('flosp started.')
-        
         self.data = Data()
         self.metadata = MetaData(setup_file_path)
-
-        
-        pass
+        #! Look for pkl files that already exist under folder naming convention and import.
     
-    def load_data(self):
-        pass
+    def load_dataED(self,path_to_file):
+        """ Load csv data for ED """
+        from flosp.io import IO
+        IO(path_to_file,self.data,self.metadata)
 
     def run_checks(self):
         """An output of current status of flosp analysis, including:

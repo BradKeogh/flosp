@@ -3,7 +3,10 @@ from flosp import Interface
 H = Interface("./example/setup.py")
 # a = interface.flosp_class()
 
-#h.load_data()
+H.load_dataED('./example/example_data.csv')
 
-print(H.data)
-print(H.metadata.setup_file_path)
+print(H.data.RawED.head(1))
+# print(H.data)
+# print(H.metadata.SETUP_FILE_PATH)
+print()
+#print(H.metadata.EDdataRAW_expected_cols)
