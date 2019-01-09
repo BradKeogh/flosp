@@ -1,18 +1,18 @@
 import numpy as np
 possible_pkls_list = ['ED.pkl','IPfce.pkl','IPward.pkl','IPspell.pkl','HOURLY.pkl','DAILY.pkl']
 
+# decison made not to include hospital-wide patient ID.
 dataRAW_expected_col_dtypes = {
-'PSEUDONYMISED_PATIENT_ID':str,
 'PSEUDONYMISED_PATIENT_ID':str,
 'AGE_AT_ARRIVAL':int,
 'GENDER_NATIONAL_DESCRIPTION':str,
 'SITE':str,
 'ARRIVAL_DTTM':object,
 'ARRIVAL_MODE_NATIONAL_CODE':str,
-'INITIAL_ASSESSMENT_DTTM':object,
-'SEEN_FOR_TREATMENT_DTTM':object,
-'SPECIALTY_REQUEST_TIME':object,
-'SPECIALTY_REFERRED_TO_DESCRIPTION':str,
+'TRIAGE_ASSESSMENT_DTTM':object,
+'FIRSTDOC_FOR_TREATMENT_DTTM':object,
+'ADM_REQUEST_DTTM':object,
+'ADM_REQUEST_LOC_DESCRIPTION':str,
 'ADMISSION_FLAG':str,
 'ATTENDANCE_CONCLUSION_DTTM':object,
 'STREAM_LOCAL_CODE':str,
@@ -20,9 +20,9 @@ dataRAW_expected_col_dtypes = {
 
 dataRAW_expected_datetime_cols = [
     'ARRIVAL_DTTM',
-    'INITIAL_ASSESSMENT_DTTM',
-    'SEEN_FOR_TREATMENT_DTTM',
-#    'SPECIALTY_REQUEST_TIME',
+    'TRIAGE_ASSESSMENT_DTTM',
+    'FIRSTDOC_FOR_TREATMENT_DTTM',
+   'ADM_REQUEST_DTTM',
     'ATTENDANCE_CONCLUSION_DTTM',
 ]
 

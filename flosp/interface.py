@@ -13,9 +13,18 @@ class Interface:
         #! Look for pkl files that already exist under folder naming convention and import.
     
     def load_dataED(self,path_to_file):
-        """ Load csv data for ED """
+        """ Load csv data for ED
+        patient record type, str, 'ED', 'IP' 
+        """
         from flosp.io import IO
-        IO(path_to_file,self.data,self.metadata)
+        IO(path_to_file, 'ED', self.data, self.metadata)
+    
+    def load_dataIP(self,path_to_file):
+        """ Load csv data for ED
+        patient record type, str, 'ED', 'IP' 
+        """
+        from flosp.io import IO
+        IO(path_to_file, 'IP', self.data, self.metadata)
 
     def run_checks(self):
         """An output of current status of flosp analysis, including:
