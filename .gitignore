@@ -109,3 +109,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+flosp/training/data_flow\.py
+
+flosp/training/mainT\.py
