@@ -1,5 +1,4 @@
 import numpy as np
-possible_pkls_list = ['ED.pkl','IPfce.pkl','IPward.pkl','IPspell.pkl','HOURLY.pkl','DAILY.pkl']
 
 # decison made not to include hospital-wide patient ID.
 dataRAW_expected_col_dtypes = {

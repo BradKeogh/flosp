@@ -15,12 +15,12 @@ class MetaData:
 
 
     def __init__(self,setup_file_path):
-        self.SETUP_FILE_PATH = setup_file_path
+        self.SETUP_FILE_PATH = setup_file_path # originally defined by user
         self.ED = LoadExpectedStructures('flosp.expected_structures.ED')
         # self.IP = LoadExpectedStructures('flosp.expected_structures.IP')
         self.load_metadata_from_setup_file()
-        # self.load_expected_structures()
-        #! auto-generate the new strings for file paths.
+        self.load_expected_structures()
+        return
 
     def load_metadata_from_setup_file(self):
         """Take data from setup file and assign to current instance."""
@@ -32,14 +32,19 @@ class MetaData:
         setattr(self.ED, 'DATETIME_FORMAT', ED_DATETIME_FORMAT)
         # setattr(self.IP, 'DATETIME_FORMAT', IP_DATETIME_FORMAT)
         print('Imported setup.py sucessfully.')
+        return
 
     def load_expected_structures(self):
         """Load expected file structure requirements for use when importing files. 
         #!Expect to refactor with its own class to import similar things for ED and IP seperately.
         """
-        import importlib
-        ExpStructure = importlib.import_module('flosp.expected_structures.ED')
-
+        #### General
+        from flosp.expected_structures.general import possible_pkls_list
+        self.POSSIBLE_PICKLES_LIST = possible_pkls_list
+        # #### ED 
+        # import importlib
+        # ExpStructure = importlib.import_module('flosp.expected_structures.ED')
+        return
 
 
 class LoadExpectedStructures:
