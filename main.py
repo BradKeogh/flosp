@@ -3,7 +3,7 @@ from flosp import Interface
 H = Interface("./example/setup.py")
 # a = interface.flosp_class()
 
-#H.load_dataED('./example/example_data.csv')
+H.load_dataED('./example/example_data.csv')
 
 print(H.data.ED.head(1))
 # print(H.data)
