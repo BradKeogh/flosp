@@ -62,12 +62,18 @@ class Interface:
         pass
 
     def make_new_tables(self):
-        """Create all aggregate tables possible i.e. houlry and daily tables """
+        """Create all aggregate tables possible i.e. hourly and daily tables """
+        # aggregation module:
+        # create_hourly_table()
+        # create_daily_table()
         pass
 
-    def extract_data(self):
-        """ extract dataframe for user manipulation """
-        pass
+    def extract_data(self, name):
+        """ extract a dataframe for user manipulation.
+        returns dataframe. """
+        assert hasattr(self.data,name) == True, "That data name does not exist." #check data attribute asked for exists
+        df = getattr(self.data,name) # extract df
+        return(df)
 
     def plot(self):
         """ Plot all graphs and tables possible with current analysis """ 
