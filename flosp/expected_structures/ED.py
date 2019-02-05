@@ -13,7 +13,7 @@ dataRAW_expected_col_dtypes = {
 'ADM_REQUEST_DTTM':object,
 'ADM_REQUEST_LOC_DESCRIPTION':str,
 'ADMISSION_FLAG':str,
-'ATTENDANCE_CONCLUSION_DTTM':object,
+'DEPARTURE_DTTM':object,
 'STREAM_LOCAL_CODE':str,
 }
 
@@ -22,11 +22,11 @@ dataRAW_expected_datetime_cols = [
     'TRIAGE_ASSESSMENT_DTTM',
     'FIRSTDOC_FOR_TREATMENT_DTTM',
    'ADM_REQUEST_DTTM',
-    'ATTENDANCE_CONCLUSION_DTTM',
+    'DEPARTURE_DTTM',
 ]
 
 dataRAW_first_datetime_col = 'ARRIVAL_DTTM' # used for making flags like attendance month, attendance_flag_weekend
-dataRAW_second_datetime_col = 'ATTENDANCE_CONCLUSION_DTTM' # used for making flags like departure month, departure_flag_weekend
+dataRAW_second_datetime_col = 'DEPARTURE_DTTM' # used for making flags like departure month, departure_flag_weekend
 
 #defunct below?
 

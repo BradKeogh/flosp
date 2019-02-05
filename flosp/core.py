@@ -18,17 +18,17 @@ def message(text, size = 'l',footer=False):
 def make_wait_columns(df):
     """ creates wait columns for dataframe
     """
-    df['waiting_time'] = (df['ATTENDANCE_CONCLUSION_DTTM'] - df['ARRIVAL_DTTM']) / pd.Timedelta('1 minute')
+    df['waiting_time'] = (df['DEPARTURE_DTTM'] - df['ARRIVAL_DTTM']) / pd.Timedelta('1 minute')
 
     df['arr_triage_wait'] = (df.TRIAGE_ASSESSMENT_DTTM - df.ARRIVAL_DTTM) / pd.Timedelta('1 minute')
     df['arr_dr_wait'] = (df.FIRSTDOC_FOR_TREATMENT_DTTM - df.ARRIVAL_DTTM) / pd.Timedelta('1 minute')
     df['arr_adm_req_wait'] = (df.ADM_REQUEST_DTTM - df.ARRIVAL_DTTM) / pd.Timedelta('1 minute')
 
-    df['adm_req_dep_wait'] = (df.ATTENDANCE_CONCLUSION_DTTM - df.ADM_REQUEST_DTTM) / pd.Timedelta('1 minute')
+    df['adm_req_dep_wait'] = (df.DEPARTURE_DTTM - df.ADM_REQUEST_DTTM) / pd.Timedelta('1 minute')
 
     df['dr_adm_req_wait'] = (df.ADM_REQUEST_DTTM - df.FIRSTDOC_FOR_TREATMENT_DTTM) / pd.Timedelta('1 minute')
 
-    df['dr_dep_wait'] = (df.ATTENDANCE_CONCLUSION_DTTM - df.FIRSTDOC_FOR_TREATMENT_DTTM) / pd.Timedelta('1 minute')
+    df['dr_dep_wait'] = (df.DEPARTURE_DTTM - df.FIRSTDOC_FOR_TREATMENT_DTTM) / pd.Timedelta('1 minute')
 
     return(df)
 
