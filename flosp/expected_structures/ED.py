@@ -25,6 +25,10 @@ dataRAW_expected_datetime_cols = [
     'ATTENDANCE_CONCLUSION_DTTM',
 ]
 
+dataRAW_first_datetime_col = 'ARRIVAL_DTTM' # used for making flags like attendance month, attendance_flag_weekend
+dataRAW_second_datetime_col = 'ATTENDANCE_CONCLUSION_DTTM' # used for making flags like departure month, departure_flag_weekend
+
+#defunct below?
 
 dataRAW_expected_dtypes2 = {
 'dept_patid':[np.float,np.int,np.int64,np.str],

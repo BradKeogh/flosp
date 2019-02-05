@@ -17,7 +17,7 @@ class MetaData:
     def __init__(self,setup_file_path):
         self.SETUP_FILE_PATH = setup_file_path # originally defined by user
         self.ED = LoadExpectedStructures('flosp.expected_structures.ED')
-        # self.IP = LoadExpectedStructures('flosp.expected_structures.IP')
+        self.IP = LoadExpectedStructures('flosp.expected_structures.IP')
         self.load_metadata_from_setup_file()
         self.load_expected_structures()
         return
@@ -25,12 +25,12 @@ class MetaData:
     def load_metadata_from_setup_file(self):
         """Take data from setup file and assign to current instance."""
 
-        from example.setup import HOSPITAL_NAME, RESULTS_SAVE_PATH, ED_DATETIME_FORMAT
+        from example.setup import HOSPITAL_NAME, RESULTS_SAVE_PATH, ED_DATETIME_FORMAT, IP_DATETIME_FORMAT
 
         self.HOSPITAL_NAME = HOSPITAL_NAME
         self.RESULTS_SAVE_PATH = RESULTS_SAVE_PATH
         setattr(self.ED, 'DATETIME_FORMAT', ED_DATETIME_FORMAT)
-        # setattr(self.IP, 'DATETIME_FORMAT', IP_DATETIME_FORMAT)
+        setattr(self.IP, 'DATETIME_FORMAT', IP_DATETIME_FORMAT)
         print('Imported setup.py sucessfully.')
         return
 
@@ -61,5 +61,7 @@ class LoadExpectedStructures:
         self.dataRAW_expected_col_dtypes = ExpStructure.dataRAW_expected_col_dtypes
         # self.dataRAW_expected_cols = ExpStructure.dataRAW_expected_cols
         self.dataRAW_expected_datetime_cols = ExpStructure.dataRAW_expected_datetime_cols
+        self.dataRAW_first_datetime_col = ExpStructure.dataRAW_first_datetime_col
+        self.dataRAW_second_datetime_col = ExpStructure.dataRAW_second_datetime_col
         print(ExpStructure)
         return

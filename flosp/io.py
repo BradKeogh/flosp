@@ -40,11 +40,14 @@ class IO:
         #### load csv and call methods to prcoess data
         self.load_csv()
         self.parse_datetimes()
-
+        
         self.make_callender_columns()
-        self.make_wait_columns()
-        self.make_breach_columns()
         self.make_age_group_column()
+        # some conversions only for ED
+        if patient_record_type == 'ED':            
+            self.make_wait_columns()
+            self.make_breach_columns()
+        
 
         #### save clean data
         setattr(self.data, patient_record_type, self.RawData) #in class
@@ -92,8 +95,10 @@ class IO:
         create additional arrival and depart columns with: arrive_hour,depart_dayofweek etc.
         """
         # df = getattr(self.data, self.RawName)
-        self.RawData = basic_tools.make_callender_columns(self.RawData,'ARRIVAL_DTTM','arrival')
-        self.RawData = basic_tools.make_callender_columns(self.RawData,'ATTENDANCE_CONCLUSION_DTTM','departure')
+        first_prefix = get_prefix_to_column(self.metadata.PRType.dataRAW_first_datetime_col)
+        last_prefix = get_prefix_to_column(self.metadata.PRType.dataRAW_second_datetime_col)
+        self.RawData = basic_tools.make_callender_columns(self.RawData, self.metadata.PRType.dataRAW_first_datetime_col,first_prefix)
+        self.RawData = basic_tools.make_callender_columns(self.RawData, self.metadata.PRType.dataRAW_second_datetime_col,last_prefix)
         # setattr(self.data, self.RawName, df)
         return
 
@@ -142,3 +147,8 @@ class IO:
         core.path_backslash_check(self.metadata.RESULTS_SAVE_PATH)
         core.save_pickle(self.RawData, self.metadata.RESULTS_SAVE_PATH + 'processed/', self.patient_record_type)
         return
+
+def get_prefix_to_column(string):
+    """takes string of column name, returns first characters before underscore """
+    first_chars = string.split('_')[0]
+    return(first_chars)
