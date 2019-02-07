@@ -45,7 +45,7 @@ class IO:
         self.make_age_group_column()
         # some conversions only for ED
         if patient_record_type == 'ED':            
-            self.make_wait_columns()
+            self.make_wait_columns_ED()
             self.make_breach_columns()
         
 
@@ -102,12 +102,12 @@ class IO:
         # setattr(self.data, self.RawName, df)
         return
 
-    def make_wait_columns(self):
+    def make_wait_columns_ED(self):
         """
         create additional columns with waiting times in minutes. Requires standard column names to generate.
         """
         # df = getattr(self.data, self.RawName)
-        self.RawData = core.make_wait_columns(self.RawData)
+        self.RawData = core.make_wait_columns_ED(self.RawData)
         # setattr(self.data, self.RawName, df)
         return
 

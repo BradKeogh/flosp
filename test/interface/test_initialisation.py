@@ -33,7 +33,7 @@ class TestInterfaceInitialisationNoPickles:
     Should do the same test with pickles after all data has been processed too? """
     pass
 
-class TestInterfaceInitialisationInCorrectPath():
+class TestInterfaceInitialisationInvalidPath():
 
     def setup(self):
         print ("setup             class:TestStuff")
@@ -44,7 +44,14 @@ class TestInterfaceInitialisationInCorrectPath():
         print ("teardown          class:TestStuff")
 
     def test_init_wrong_path(self):
-        pass
+        """ Check that Interface is initialised and has data and metadata properties. 
+        Check that these are parts of classes. """
+        from flosp.interface import Interface
+        from flosp.data import Data,MetaData
+        # hosp = Interface(setup_file_path='./example/blarg/setjup.py') # how on earth is this passing? File path does not exist.
+        assert(isinstance(self.hosp,Interface))
+        assert(isinstance(self.hosp.data,Data))
+        assert(isinstance(self.hosp.metadata,MetaData))
 
 class TestInterfaceLoadED():
     """ import example data

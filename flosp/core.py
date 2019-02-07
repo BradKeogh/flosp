@@ -15,7 +15,7 @@ def message(text, size = 'l',footer=False):
         print('-'*20)
     return
 
-def make_wait_columns(df):
+def make_wait_columns_ED(df):
     """ creates wait columns for dataframe
     """
     df['waiting_time'] = (df['DEPARTURE_DTTM'] - df['ARRIVAL_DTTM']) / pd.Timedelta('1 minute')
