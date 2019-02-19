@@ -3,6 +3,7 @@ import numpy as np
 # decison made not to include hospital-wide patient ID.
 dataRAW_expected_col_dtypes = {
 'PSEUDONYMISED_PATIENT_ID':str,
+'SPELL_ID':str,
 'AGE_AT_ARRIVAL':int,
 'GENDER_NATIONAL_DESCRIPTION':str,
 'SITE':str,

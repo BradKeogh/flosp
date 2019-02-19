@@ -10,7 +10,6 @@ class Interface:
 
     def __init__(self,setup_file_path = './setup.py'):
         """
-
         Decision made to enforce user specification of setup_file_path to avoid confusion incase working on mulitple sites (unpractical to have in same dir).
         """
         print('flosp started.')
@@ -64,6 +63,8 @@ class Interface:
     def make_new_tables(self):
         """Create all aggregate tables possible i.e. hourly and daily tables """
         # aggregation module:
+        from flosp.aggregation import Aggregate
+        Aggregate(self.data,self.metadata)
         # create_hourly_table()
         # create_daily_table()
         pass

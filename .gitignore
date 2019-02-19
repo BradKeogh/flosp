@@ -5,6 +5,7 @@ hhft/
 pmth/
 processed/
 example/example_results/
+flosp/training/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
