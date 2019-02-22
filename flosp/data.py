@@ -1,3 +1,5 @@
+import imp
+
 #### Base class
 
 class Data:
@@ -24,13 +26,13 @@ class MetaData:
 
     def load_metadata_from_setup_file(self):
         """Take data from setup file and assign to current instance."""
+        #filename = self.SETUP_FILE_PATH.split('/')[-1] # get filename
+        setup = imp.load_source('setup.py',self.SETUP_FILE_PATH)
 
-        from example.setup import HOSPITAL_NAME, RESULTS_SAVE_PATH, ED_DATETIME_FORMAT, IP_DATETIME_FORMAT
-
-        self.HOSPITAL_NAME = HOSPITAL_NAME
-        self.RESULTS_SAVE_PATH = RESULTS_SAVE_PATH
-        setattr(self.ED, 'DATETIME_FORMAT', ED_DATETIME_FORMAT)
-        setattr(self.IP, 'DATETIME_FORMAT', IP_DATETIME_FORMAT)
+        self.HOSPITAL_NAME = setup.HOSPITAL_NAME
+        self.RESULTS_SAVE_PATH = setup.RESULTS_SAVE_PATH
+        setattr(self.ED, 'DATETIME_FORMAT', setup.ED_DATETIME_FORMAT)
+        setattr(self.IP, 'DATETIME_FORMAT', setup.IP_DATETIME_FORMAT)
         print('Imported setup.py sucessfully.')
         return
 
