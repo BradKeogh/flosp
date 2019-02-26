@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 import pandas as pd
 from functools import reduce
@@ -44,24 +46,34 @@ class Aggregate:
         IP_admissions_total = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_total')
         IP_discharges_total = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_total')
         # occupancy
+        IP_occ_total = count_hourly_occupancy(self.data.IP,'ADM_DTTM','DIS_DTTM','IP_occ_total')
+
+        # df_new = count_hourly_occupancy2(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','new_col')
 
 
         #### combine aggregations:
         # Events - merge, reindex, fill zeros
         events_dfs = [ED_arrivals,ED_departures,IP_admissions_total,IP_discharges_total]
         events_df_merged = merge_series_with_datetime_index(events_dfs)
+        events_df_merged = events_df_merged.resample('H').sum() # fills in missing hours from datetime index. using .sum() puts zeroes into the missing values of the index.
+        events_df_merged.fillna(value=0, inplace=True)
 
         # reindex, 
         events_df_merged2 = events_df_merged.reindex(index=master_index) # No ED counts when do this; this looks like a problem, but actually example ED dataset is lacking any data for this period.
         
         # Occupancies - merge, reindex, ffill
 
-        occ_dfs = [ED_occ_total]
+        occ_dfs = [ED_occ_total, IP_occ_total]
+        occ_df_merged = merge_series_with_datetime_index(occ_dfs)
+        occ_df_merged = occ_df_merged.resample('H').ffill() # fill missing hours in datetime index. ffill from previous occupancy that has been calculated.
+        events_df_merged.fillna(value='ffill', inplace=True)
+
 
 
         # Merge into one table, assign to data class
-        self.data.HOURLY = events_df_merged
-        self.data.HOURLY2 = ED_occ_total
+        hourly = merge_series_with_datetime_index([events_df_merged, occ_df_merged])
+        self.data.HOURLY = hourly
+        # self.data.HOURLY2 = occ_df_merged
         return
     
 
@@ -135,56 +147,20 @@ def find_min_value_in_dataframe_col(df,col_name):
     return min_val
 
 
-
-def count_hourly_occupancy(df,arrival_col,departure_col,count_name):
-    """
-    inputs:
-    df with attendance number as index,
-    arrival, departure datetime col names (must be datetime format)
-    ouptut:
-    df, contains many-to-many link between the arrival_
-    NOTE: re-write required: very slow.
-    """
-    import itertools
-    df1 = df[[arrival_col,departure_col]].copy()
-    df1[arrival_col] = df1[arrival_col].apply(lambda x : x.replace(second=0,minute=0)) # round arrival hour down
-    df1[departure_col] = df1[departure_col].apply(lambda x : x.replace(second=0,minute=0)) +pd.Timedelta(hours=1) # round leaving tim up
-    
-    #### create col with number of hours active 
-    df1['n_hours'] = ((df1[departure_col] - df1[arrival_col])/pd.Timedelta(1,'h')).astype(int)
-    df1 = df1.drop(df1[df1['n_hours'] <=0].index) # must drop the negative n_hour rows as otherwise messes up my size of array initilisation (was getting an error that the index i was assinging to in ids was out of bounds).
-    
-    #### time efficient (i hope) function for cycling through and finding all combinations of active hours for attednaces - create a (long format) list of links between attendance numbers and 
-
-    # function for list comp which finds list of datetimes (for each hour)
-    date_func = lambda datetime , offset : datetime + pd.Timedelta(offset,'h')
-
-    # iterate over rows in df
-    df1 = df1.reset_index() # reset so have the new index to itereate over
-
-    ids = np.empty(shape=(df1['n_hours'].sum()),dtype='int64') # initilise array - change to np.empty() to speed up
-    timestamps = np.empty(shape=(df1['n_hours'].sum()),dtype='datetime64[s]')
-    row_count = 0
-
-    for row in df1.itertuples():
-        atten_id = [row[1]]
-        hour_list = [date_func(row[2],i) for i in np.arange(row[4])] # creates list of hour datetimes
-
-        # create array of list for all combinations of timestamp
-        for i in itertools.product(atten_id,hour_list):
-            ids[row_count] = i[0] # assign patient numbers
-            timestamps[row_count] = i[1]
-            row_count += 1 # add to row count for new array    
-    # put into df
-    data = {'atten_id':ids}
-    df_new = pd.DataFrame(data=data,index=timestamps,columns=[count_name])
-
-    return(df_new)
-
 def count_hourly_events(df,event_column_name,new_col_name):
     """
-    Count number of events (records) at hourly level, given datetime column.
-    input: df, column_name.
+    Takes a df at patient record level, counts number of events (records) at hourly level. Event is taken to happen when event_column_name datetime occurs.
+    Input
+    =====
+    df, dataframe, 
+    event_column_name, str, 
+    new_column_name, str, 
+
+    Output
+    ======
+    even_counts, dataframe, single column with count of events, datetime index (hourly & potentially non-continuous). 
+
+
     """
     #### set up data to make calc easier
     df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour
@@ -196,6 +172,76 @@ def count_hourly_events(df,event_column_name,new_col_name):
     # put into df
     event_counts = pd.DataFrame(data = counts, index= unique, columns = [new_col_name])
     return event_counts
+
+    
+def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column_name):
+    """
+    Function takes patient record level dataframe and calculates the occupancy/activity for each hour of the day.
+    The activity is defined based on the two datetime columns being provided.
+    e.g. if 'attendnace datetime' and 'departure datetime' were given then the 'activity' would be the occupancy of the department.
+
+    Inputs
+    ======
+    df, pandas dataframe, with patient-record level activity.
+    datetime_col_start, str, name of column in df when the activity begins. Column must be in datetime format.
+    datetime_col_end, str, name of column in df when the activity ends. Column must be in datetime format.
+    new_col_name, str, name to assign the new column that is produced.
+
+    Output
+    ======
+    df, pandas dataframe, datetime index at hourly level, single column containing the count of activity in that hour
+    (index potentially not continuous).
+    """
+    #### setup data to be easier to compute, 
+#         df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour
+    df1 = df[[datetime_col_start,datetime_column_end]].copy()
+    df1[datetime_col_start] = df1[datetime_col_start].apply(lambda x : x.replace(second=0,minute=0)) # round arrival hour down
+    df1[datetime_column_end] = df1[datetime_column_end].apply(lambda x : x.replace(second=0,minute=0)) +pd.Timedelta(hours=1)
+    
+    
+    #### create col with number of hours active 
+    df1['n_hours'] = ((df1[datetime_column_end] - df1[datetime_col_start])/pd.Timedelta(1,'h')).astype(int)
+    df1 = df1.drop(df1[df1['n_hours'] <=0].index) # must drop the negative n_hour rows as otherwise messes up my size of array initilisation (was getting an error that the index i was assinging to in ids was out of bounds).
+
+    #### time efficient (i hope) function for cycling through and finding all combinations of active hours for attednaces 
+    # - create a (long format) list of links between attendance numbers and 
+    # function for list comp which finds list of datetimes (for each hour)
+    date_func = lambda datetime , offset : datetime + pd.Timedelta(offset,'h')
+
+    # iterate over rows in df
+    df1 = df1.reset_index() # reset so have the new index to itereate over
+
+    ids = np.empty(shape=(df1['n_hours'].sum()),dtype='int64') # initilise array - change to np.empty() to speed up
+    timestamps = np.empty(shape=(df1['n_hours'].sum()),dtype='datetime64[s]')
+    row_count = 0 # initialise row counter for empty arrays
+    
+    # iterate through rows of df
+    for row in df1.itertuples():
+        atten_id = [row[1]] # get attendance id
+        hour_list = [date_func(row[2],i) for i in np.arange(row[4])] # make a list datetimes for each hour that patient is active.
+
+        # populate empty arrays with seperate list of ids and timestamps.  
+        for i in itertools.product(atten_id,hour_list):
+            ids[row_count] = i[0] # assign patient number to array
+            timestamps[row_count] = i[1] # 
+            row_count += 1 # add to row count for new id-> hour pair
+    
+    # put ids and timestamps into df
+    data = {'atten_id':ids,'hours':timestamps}
+    df_new = pd.DataFrame(data=data)
+    
+    # count isntances for each hour
+    df_new = df_new.groupby(['hours']).count()
+    
+    # Tidy colum names
+#     df_new.set_index('hours', inplace=True)
+    df_new.index.name = '' # remove 'hours' as index name
+    
+    df_new.rename(columns = {'atten_id' : new_column_name}, inplace = True) # rename to final column name.
+
+    return df_new
+
+
 
 def merge_series_with_datetime_index(dfs_to_merge):
     "take list of dfs and merge all on index. returns merged df."
