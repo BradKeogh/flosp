@@ -50,7 +50,7 @@ class TestInterface:
     def setup(self):
         print ("setup             class:TestStuff")
         from flosp.interface import Interface
-        hosp = Interface()
+        hosp = Interface('./example/setup.py')
  
     def teardown(self):
         print ("teardown          class:TestStuff")

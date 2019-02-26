@@ -3,6 +3,9 @@
 # BUGS found:
 # in test_initialise - not using the file path given by user at beginning.
 
+from flosp.interface import Interface
+print('imported interface')
+
 class TestInterfaceInitialisationCorrectPath:
     """ test initialisation of Interface Class. This is more like an integration test
     - check correct classes
@@ -12,7 +15,7 @@ class TestInterfaceInitialisationCorrectPath:
     def setup(self):
         print ("setup             class:TestStuff")
         from flosp.interface import Interface
-        self.hosp = Interface()
+        self.hosp = Interface('./flosp/test/data/simpleday/setup.py')
  
     def teardown(self):
         print ("teardown          class:TestStuff")
@@ -61,8 +64,8 @@ class TestInterfaceLoadED():
     def setup(self):
         print ("setup             class:TestStuff")
         from flosp.interface import Interface
-        self.hosp = Interface()
-        self.hosp.load_dataED('./example/example_data_ED.csv')
+        self.hosp = Interface('./example/setup.py')
+        self.hosp.load_dataED('./example/example_data_ED.csv') # note this path makes it important which dir pytest is run
      
 
     def test_load_dataED(self):
