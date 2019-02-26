@@ -2,7 +2,7 @@
 
 # BUGS found:
 # in test_initialise - not using the file path given by user at beginning.
-
+import pytest
 from flosp.interface import Interface
 print('imported interface')
 
@@ -46,6 +46,7 @@ class TestInterfaceInitialisationInvalidPath():
     def teardown(self):
         print ("teardown          class:TestStuff")
 
+    @pytest.mark.xfail(raises=FileNotFoundError)
     def test_init_wrong_path(self):
         """ Check that Interface is initialised and has data and metadata properties. 
         Check that these are parts of classes. """
