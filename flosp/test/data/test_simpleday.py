@@ -8,7 +8,6 @@ class TestInterfaceED():
     """
     def setup(self):
         print ("setup Interface and load data files.")
-        from flosp.interface import Interface
         self.hosp = Interface('./flosp/test/data/simpleday/setup.py')
         self.hosp.load_dataED('./flosp/test/data/simpleday/SimpleED.csv') # note this path makes it important which dir 
      
@@ -34,7 +33,6 @@ class TestInterfaceIP():
     """
     def setup(self):
         print ("setup Interface and load data files.")
-        from flosp.interface import Interface
         self.hosp = Interface('./flosp/test/data/simpleday/setup.py')
         self.hosp.load_dataIP('./flosp/test/data/simpleday/SimpleIP.csv') # note this path makes it important which dir run from
 
@@ -67,7 +65,7 @@ class TestCompleteAggregation():
             'IP_admissions_total':48,
             'IP_discharges_total':48,
             'ED_occ_total':48,          
-            'IP_occ_total':3504,
+            'IPocc_total':3504,
             }
 
         for column in columns.keys():

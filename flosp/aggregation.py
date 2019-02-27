@@ -37,24 +37,60 @@ class Aggregate:
         # Count events - 
         ED_arrivals = count_hourly_events(self.data.ED,'ARRIVAL_DTTM','ED_arrivals')
         ED_departures = count_hourly_events(self.data.ED,'DEPARTURE_DTTM','ED_departures')
+        # ED_admissions # query for admitted patients,'DEPARTURE DTTM'
+        # ED_breaches # query: breach patients, 'BREACH DTTM'
+        #  
         # occupancy counting
         ED_occ_total = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','ED_occ_total')
 
+        # col with breach time -> so can count events
+        # optional query for count_hourly_events
+
+        # Definitions found here: https://www.datadictionary.nhs.uk/data_dictionary/attributes/a/add/admission_method_de.asp?shownav=1?query=%22admission+type%22&rank=3.012927&shownav=1
+
+        nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
+        elec_query = "ADM_METHOD in ['11','12','13']" # 11,12,13
+        elec_nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81','11','12','13']"
 
         #### Aggregate IP columns
         # events
         IP_admissions_total = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_total')
         IP_discharges_total = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_total')
+
+        IP_admissions_nonelec = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_nonelec', query=nonelec_query)
+        IP_admissions_elec = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_elec', query=elec_query)
+        IP_admissions_elec_nonelec = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_elec_nonelec', query=elec_nonelec_query)
+        
+        IP_discharges_nonelec = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_nonelec', query=nonelec_query)
+        IP_discharges_elec = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_elec', query=elec_query)
+        IP_discharges_elec_nonelec = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_elec_nonelec', query=elec_nonelec_query)
+
+        
+
         # occupancy
-        IP_occ_total = count_hourly_occupancy(self.data.IP,'ADM_DTTM','DIS_DTTM','IP_occ_total')
+        IPocc_total = count_hourly_occupancy(self.data.IP,'ADM_DTTM','DIS_DTTM','IPocc_total')
+        IPocc_elec_nonelec = count_hourly_occupancy(self.data.IP,'ADM_DTTM','DIS_DTTM','IPocc_elec_nonelec', query = elec_nonelec_query)
 
         # df_new = count_hourly_occupancy2(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','new_col')
 
 
         #### combine aggregations:
         # Events - merge, reindex, fill zeros
-        events_dfs = [ED_arrivals,ED_departures,IP_admissions_total,IP_discharges_total]
-        events_df_merged = merge_series_with_datetime_index(events_dfs)
+        events_dfs = [
+            ED_arrivals,
+            ED_departures,
+
+            IP_admissions_total,
+            IP_admissions_elec,
+            IP_admissions_elec_nonelec,
+            IP_admissions_nonelec,
+
+            IP_discharges_total,
+            IP_discharges_nonelec,
+            IP_discharges_elec,
+            IP_discharges_elec_nonelec,
+            ]
+        events_df_merged = merge_dfs_with_datetime_index(events_dfs)
         events_df_merged = events_df_merged.resample('H').sum() # fills in missing hours from datetime index. using .sum() puts zeroes into the missing values of the index.
         events_df_merged.fillna(value=0, inplace=True)
 
@@ -63,15 +99,16 @@ class Aggregate:
         
         # Occupancies - merge, reindex, ffill
 
-        occ_dfs = [ED_occ_total, IP_occ_total]
-        occ_df_merged = merge_series_with_datetime_index(occ_dfs)
+        occ_dfs = [ED_occ_total, IPocc_total, IPocc_elec_nonelec]
+        occ_df_merged = merge_dfs_with_datetime_index(occ_dfs)
         occ_df_merged = occ_df_merged.resample('H').ffill() # fill missing hours in datetime index. ffill from previous occupancy that has been calculated.
         events_df_merged.fillna(value='ffill', inplace=True)
 
 
-
         # Merge into one table, assign to data class
-        hourly = merge_series_with_datetime_index([events_df_merged, occ_df_merged])
+        hourly = merge_dfs_with_datetime_index([events_df_merged, occ_df_merged])
+        # create final columns as necessary
+        hourly['IPadm_minus_dis_elec_nonelec'] = hourly['IP_admissions_elec_nonelec'] - hourly['IP_discharges_elec_nonelec']
         self.data.HOURLY = hourly
         # self.data.HOURLY2 = occ_df_merged
         return
@@ -101,19 +138,46 @@ class Aggregate:
         return
 
     def make_daily_table(self):
-        """ Takes hourly level df and aggregates to DAILY table.
-        Assigns output as a DATA class attribute.
+        """ 
+        Takes hourly level df and aggregates to DAILY table.
+        Different columns require different aggregation. Seperate loops used to compute each.
+        Assigns output df as a data.DAILY class attribute.
         """
-        # check that hourly table exists. (superfluous?, only called above.)
+        #### perform index resample (to daily) on each column in hourly status
+        # SUMMED COLUMNS
+        daily_columns_list = []
+        for column in ['ED_arrivals','ED_departures']:
+            daily_series = self.data.HOURLY[column].resample('D').sum()
+            daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index 
+            daily_columns_list.append(daily_df)
+        
+        # MEAN columns
+        for column in ['IPocc_elec_nonelec','IPocc_total']:
+            daily_series = self.data.HOURLY[column].resample('D').mean()
+            daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index
+            daily_df.rename(columns={column:column + '_MEAN'},inplace=True) # add suffix to column name in daily df
+            daily_columns_list.append(daily_df)
 
-        # find date range (from hourly table), make DT index.
 
-        # perform groupby on each column in houlry status
+        # MAX columns
+        for column in ['IPocc_total','IPocc_elec_nonelec']:
+            daily_series = self.data.HOURLY[column].resample('D').max()
+            daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index
+            daily_df.rename(columns={column:column + '_MAX'},inplace=True) # add suffix to column name in daily df
+            daily_columns_list.append(daily_df)
 
-        # perform groupby on some filtered columns, i.e. discharges pre-noon
+
+        # perform groupby on some filtered columns, i.e. discharges pre-noon #  'IPdis_pre12_elec_nonelec'
+        for column in ['IP_discharges_elec_nonelec']:
+            daily_series = self.data.HOURLY.between_time('0:00', '12:01')[column].resample('D').sum()
+            daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index
+            daily_df.rename(columns={column:column + '_PRE12'},inplace=True) # add suffix to column name in daily df
+            daily_columns_list.append(daily_df)
 
         # combine into new table, assign to data class
-        pass
+        daily_dfs_merged = merge_dfs_with_datetime_index(daily_columns_list)
+        self.data.DAILY = daily_dfs_merged
+        return
 
     def make_masterDT_index(self):
         """ Takes dataframes which are available. Returns datetime index which spans all records. """
@@ -127,7 +191,6 @@ class Aggregate:
             dt_mins.append(find_min_value_in_dataframe_col(df,col_name)) # add min value of first datetime col to list
             col_name = i_metadata.dataRAW_second_datetime_col
             dt_maxs.append(find_max_value_in_dataframe_col(df,col_name))
-        print(dt_mins)
         startDT = np.amin(dt_mins).round('D')
         endDT = np.amax(dt_maxs).round('D')
 
@@ -137,17 +200,17 @@ class Aggregate:
 
 
 def find_max_value_in_dataframe_col(df,col_name):
-    " given a dataframe and name of datetime column. return the max and min dates."
+    " given a dataframe and name of datetime column. return the max and min dates in the column."
     max_val = df[col_name].max()
     return max_val
 
 def find_min_value_in_dataframe_col(df,col_name):
-    " given a dataframe and name of datetime column. return the max and min dates."
+    " given a dataframe and name of datetime column. return the max and min dates in the column."
     min_val = df[col_name].max()
     return min_val
 
 
-def count_hourly_events(df,event_column_name,new_col_name):
+def count_hourly_events(df,event_column_name,new_col_name, query = None):
     """
     Takes a df at patient record level, counts number of events (records) at hourly level. Event is taken to happen when event_column_name datetime occurs.
     Input
@@ -155,6 +218,7 @@ def count_hourly_events(df,event_column_name,new_col_name):
     df, dataframe, 
     event_column_name, str, 
     new_column_name, str, 
+    query, str, optional, sql-style query called on df using df.query('input string query here')
 
     Output
     ======
@@ -162,6 +226,10 @@ def count_hourly_events(df,event_column_name,new_col_name):
 
 
     """
+    #### filter for query if present
+    if query != None:
+        df = df.query(query)
+
     #### set up data to make calc easier
     df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour
     
@@ -174,7 +242,7 @@ def count_hourly_events(df,event_column_name,new_col_name):
     return event_counts
 
     
-def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column_name):
+def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column_name,query = None):
     """
     Function takes patient record level dataframe and calculates the occupancy/activity for each hour of the day.
     The activity is defined based on the two datetime columns being provided.
@@ -186,12 +254,16 @@ def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column
     datetime_col_start, str, name of column in df when the activity begins. Column must be in datetime format.
     datetime_col_end, str, name of column in df when the activity ends. Column must be in datetime format.
     new_col_name, str, name to assign the new column that is produced.
+    query, str, optional, sql-style query called on df using df.query('input string query here')
 
     Output
     ======
     df, pandas dataframe, datetime index at hourly level, single column containing the count of activity in that hour
     (index potentially not continuous).
     """
+    # if query present filter dataframe with it
+    if query != None:
+        df = df.query(query)
     #### setup data to be easier to compute, 
 #         df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour
     df1 = df[[datetime_col_start,datetime_column_end]].copy()
@@ -243,7 +315,7 @@ def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column
 
 
 
-def merge_series_with_datetime_index(dfs_to_merge):
+def merge_dfs_with_datetime_index(dfs_to_merge):
     "take list of dfs and merge all on index. returns merged df."
 
     events_df_merged = reduce(lambda  left, right: pd.merge(left, right ,left_index=True, right_index=True, how='outer'), dfs_to_merge)
