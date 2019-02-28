@@ -13,18 +13,18 @@ dataRAW_expected_col_dtypes = {
 'DIS_DTTM':object,
 'DIS_DESTINATION':str,
 'DIS_METHOD':str,
-'MOVE_NUMBER':int,
-'MOVE_START':object,
-'MOVE_END':object,
-'MOVE_NAME':str,
+'LOCATION_NUMBER':int,
+'LOCATION_START':object,
+'LOCATION_END':object,
+'LOCATION_NAME':str,
 'SPELL_LOS':int
 }
 
 dataRAW_expected_datetime_cols = [
     'ADM_DTTM',
     'DIS_DTTM',
-    'MOVE_START',
-   'MOVE_END'
+    'LOCATION_START',
+   'LOCATION_END'
 ]
 
 dataRAW_first_datetime_col = 'ADM_DTTM' # used for making flags like attendance month, attendance_flag_weekend

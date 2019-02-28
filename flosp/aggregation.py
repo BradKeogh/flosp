@@ -6,7 +6,7 @@ from functools import reduce
 
 class Aggregate:
     """ 
-    Aggregates new tables from record data. i.e. takes ED attendance table and produces hourly or/and daily tables.
+    Aggregates new tables from record-level data. i.e. takes ED attendance table and produces hourly or/and daily tables.
     """
 
     def __init__(self,data,metadata):
@@ -113,30 +113,6 @@ class Aggregate:
         # self.data.HOURLY2 = occ_df_merged
         return
     
-
-    def count_hourly_occupancy2(self,df,datetime_col_start,datetime_column_end):
-        """
-        inputs: df, col_name, new_col_name
-        returns: df, with datetime index at hourly level, index not complete
-        """
-        #### setup data to be easier to compute, 
-        df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour
-        
-        #### make array and find counts of uniques datetimes
-        times = df['event_column_name_rounded'].values
-        unique, counts = np.unique(times, return_counts=True)
-        
-        # put into df
-        event_counts = pd.DataFrame(data = counts, index= unique, columns = [new_col_name])
-        #### 
-
-        return
-
-    def aggregate_columns(self,dt_index):
-        """ takes a """
-        # 
-        return
-
     def make_daily_table(self):
         """ 
         Takes hourly level df and aggregates to DAILY table.
