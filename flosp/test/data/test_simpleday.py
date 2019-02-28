@@ -62,10 +62,13 @@ class TestCompleteAggregation():
         columns = {
             'ED_arrivals':24,
             'ED_departures':24,
-            'IP_admissions_total':48,
-            'IP_discharges_total':48,
+            'IP_admissions_total':24,
+            'IP_discharges_total':24,
             'ED_occ_total':48,          
-            'IPocc_total':3504,
+            'IPocc_total':1752,
+            'IP_admissions_nonelec':12,
+            'IP_discharges_elec':12,
+            'IPadm_minus_dis_elec_nonelec':0,
             }
 
         for column in columns.keys():

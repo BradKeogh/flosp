@@ -22,9 +22,23 @@ class Aggregate:
         if hasattr(self.data,'IP'):
             self.metadata.list_record_level_dfs.append('IP')
         # run hourly and daily methods.
+        self.make_IPSPELL_table()
         self.make_hourly_table()
         self.make_daily_table()
 
+        return
+
+    def make_IPSPELL_table(self):
+        """ 
+        Takes record-level IP data at location level (i.e. multiple records for a single spell/hospital stay, either FCE or ward) and makes SPELL level record.
+        """
+        #### Get IP data and filter for first location record for each spell/hospital stay 
+        df = self.data.IP.query('LOCATION_NUMBER == "1"').copy()
+        #### remove LOCATION columns that are now not of interest
+        df.drop(['LOCATION_END','LOCATION_START','LOCATION_NUMBER'],axis=1,inplace=True)
+        #### rename LOCATION_NAME to 'FIRST_LOCATION'
+        df.rename(columns={'LOCATION_NAME':'FIRST_LOCATION'},inplace=True)
+        self.data.IPSPELL = df
         return
 
     def make_hourly_table(self):
@@ -54,22 +68,22 @@ class Aggregate:
 
         #### Aggregate IP columns
         # events
-        IP_admissions_total = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_total')
-        IP_discharges_total = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_total')
+        IP_admissions_total = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_total')
+        IP_discharges_total = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_total')
 
-        IP_admissions_nonelec = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_nonelec', query=nonelec_query)
-        IP_admissions_elec = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_elec', query=elec_query)
-        IP_admissions_elec_nonelec = count_hourly_events(self.data.IP,'ADM_DTTM','IP_admissions_elec_nonelec', query=elec_nonelec_query)
+        IP_admissions_nonelec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_nonelec', query=nonelec_query)
+        IP_admissions_elec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_elec', query=elec_query)
+        IP_admissions_elec_nonelec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_elec_nonelec', query=elec_nonelec_query)
         
-        IP_discharges_nonelec = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_nonelec', query=nonelec_query)
-        IP_discharges_elec = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_elec', query=elec_query)
-        IP_discharges_elec_nonelec = count_hourly_events(self.data.IP,'DIS_DTTM','IP_discharges_elec_nonelec', query=elec_nonelec_query)
+        IP_discharges_nonelec = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_nonelec', query=nonelec_query)
+        IP_discharges_elec = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_elec', query=elec_query)
+        IP_discharges_elec_nonelec = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_elec_nonelec', query=elec_nonelec_query)
 
         
 
         # occupancy
-        IPocc_total = count_hourly_occupancy(self.data.IP,'ADM_DTTM','DIS_DTTM','IPocc_total')
-        IPocc_elec_nonelec = count_hourly_occupancy(self.data.IP,'ADM_DTTM','DIS_DTTM','IPocc_elec_nonelec', query = elec_nonelec_query)
+        IPocc_total = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_total')
+        IPocc_elec_nonelec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_elec_nonelec', query = elec_nonelec_query)
 
         # df_new = count_hourly_occupancy2(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','new_col')
 
@@ -189,6 +203,7 @@ def find_min_value_in_dataframe_col(df,col_name):
 def count_hourly_events(df,event_column_name,new_col_name, query = None):
     """
     Takes a df at patient record level, counts number of events (records) at hourly level. Event is taken to happen when event_column_name datetime occurs.
+    
     Input
     =====
     df, dataframe, 
@@ -204,7 +219,7 @@ def count_hourly_events(df,event_column_name,new_col_name, query = None):
     """
     #### filter for query if present
     if query != None:
-        df = df.query(query)
+        df = df.query(query)# .copy() -required to remove pink warning of copying when user calls method "make_new_tables()"
 
     #### set up data to make calc easier
     df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour
