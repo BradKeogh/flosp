@@ -89,7 +89,7 @@ class Aggregate:
 
 
         #### combine aggregations:
-        # Events - merge, reindex, fill zeros
+        ## Events - merge, reindex, fill zeros
         events_dfs = [
             ED_arrivals,
             ED_departures,
@@ -108,10 +108,10 @@ class Aggregate:
         events_df_merged = events_df_merged.resample('H').sum() # fills in missing hours from datetime index. using .sum() puts zeroes into the missing values of the index.
         events_df_merged.fillna(value=0, inplace=True)
 
-        # reindex, 
-        events_df_merged2 = events_df_merged.reindex(index=master_index) # No ED counts when do this; this looks like a problem, but actually example ED dataset is lacking any data for this period.
+        # reindex events - commented out post as assigned variables is never used.
+        # events_df_merged2 = events_df_merged.reindex(index=master_index) # No ED counts when do this; this looks like a problem, but actually example ED dataset is lacking any data for this period.
         
-        # Occupancies - merge, reindex, ffill
+        ## Occupancies - merge, reindex, ffill
 
         occ_dfs = [ED_occ_total, IPocc_total, IPocc_elec_nonelec]
         occ_df_merged = merge_dfs_with_datetime_index(occ_dfs)
