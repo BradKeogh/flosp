@@ -4,6 +4,8 @@ hh(ED_slide_packs_code)/
 hhft/
 pmth/
 processed/
+example/example_results/
+flosp/training/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -109,3 +111,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+flosp/training/data_flow\.py
+
+flosp/training/mainT\.py

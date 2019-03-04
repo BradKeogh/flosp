@@ -1,11 +1,11 @@
-from flosp import _core
+from flosp import core
 from flosp.timeseries import timeseries
 import warnings
 
 def test_fun():
     """ serves no purpose other than debugging """
-    _core.message('test')
-    return(True, _core.message)
+    core.message('test')
+    return(True, core.message)
 
 def tidy_column_heads(df):
     """
@@ -47,7 +47,7 @@ def convert_cols_datetime(df,dt_format,col_names = None):
     """
     import numpy as np
     import pandas as pd
-    _core.message('Converting cols to datetime...(may take some time depedning on size of df)...',size='s')
+    core.message('Converting cols to datetime...(may take some time depedning on size of df)...',size='s')
 
     #### find column names which have datetime in them, if non columns have been provided
     if col_names == None:
@@ -56,13 +56,13 @@ def convert_cols_datetime(df,dt_format,col_names = None):
     #### find columns that are already in datetime format from the list
     col_names_dt = [i for i in col_names if df[i].dtype == np.dtype('datetime64[ns]')]
     for i in col_names_dt:
-        _core.message(i + '...is already datetime format','s')
+        core.message(i + '...is already datetime format','s')
     #### get list of cols that need converting
     col_names = [i for i in col_names if df[i].dtype != np.dtype('datetime64[ns]')]
 
     #### do datetime conversion columns that are in list
     for i in col_names:
-        _core.message(i + '...converting',size='s')
+        core.message(i + '...converting',size='s')
         df[i] = pd.to_datetime(df[i],format=dt_format)
     return(df)
 
@@ -91,7 +91,7 @@ def make_callender_columns(df,column,prefix):
     Output
     df, df: new df with additional columns with numerical indicators for callender vars.
     """
-    _core.message('Making callender columns from:  ' + column)
+    core.message('Making callender columns from:  ' + column)
 
     dft = df # needed for cases which do not have missing datetime values
 
@@ -126,7 +126,7 @@ def create_datetime_from_time(df,time_col,date_col,new_col,auto_correct=True):
     import pandas as pd
     import numpy as np
     import warnings
-    _core.message('Create datetime column from: ' + str(time_col) +' & '+ str(date_col) )
+    core.message('Create datetime column from: ' + str(time_col) +' & '+ str(date_col) )
 
     # get df without nans
     df_dropna = df[[time_col,date_col]].dropna()

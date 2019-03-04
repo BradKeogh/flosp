@@ -67,7 +67,7 @@ class ioED:
         """
         #! implement method as series of other method calls...use jupyter notebook as guide for order.
         self.make_callender_columns()
-        self.make_wait_columns()
+        self.make_wait_columns_ED()
         self.make_breach_columns()
         self.make_age_group_column()
         return
@@ -106,11 +106,11 @@ class ioED:
         self._dataRAW = basic_tools.make_callender_columns(self._dataRAW,'depart_datetime','depart')
         return
 
-    def make_wait_columns(self):
+    def make_wait_columns_ED(self):
         """
         create additional columns with waiting times in minutes. Requires standard column names to generate.
         """
-        self._dataRAW = _core.make_wait_columns(self._dataRAW)
+        self._dataRAW = _core.make_wait_columns_ED(self._dataRAW)
         return
 
     def make_breach_columns(self):

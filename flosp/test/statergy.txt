@@ -1,0 +1,7 @@
+# Test stratergy
+- folder strucutre for each module
+- methods only tested if they return something
+- each function which is seperate tested in its own script
+- 
+
+# classes and methods tested with use cases, i.e. example data sets. 

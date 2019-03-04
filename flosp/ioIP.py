@@ -52,7 +52,7 @@ class ioIP:
         """
         #! implement method as series of other method calls...use jupyter notebook as guide for order.
         self.make_callender_columns()
-        self.make_wait_columns()
+        self.make_wait_columns_ED()
         self.make_breach_columns()
         self.make_age_group_column()
         self.apply_filers()
