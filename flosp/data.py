@@ -50,8 +50,9 @@ class MetaData:
         #!Expect to refactor with its own class to import similar things for ED and IP seperately.
         """
         #### General
-        from flosp.expected_structures.general import possible_pkls_list
+        from flosp.expected_structures.general import possible_pkls_list, plot_information_table
         self.POSSIBLE_PICKLES_LIST = possible_pkls_list
+        self.PLOT_LIST = plot_information_table
         # #### ED 
         # import importlib
         # ExpStructure = importlib.import_module('flosp.expected_structures.ED')

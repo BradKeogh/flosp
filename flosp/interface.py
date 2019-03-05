@@ -122,3 +122,9 @@ class Interface:
         """ 
         WeeklyPlotting(self.data, self.metadata, dt_weekstart, required_plot_no)
         return
+
+    def get_plot_list(self):
+        """
+        When called returns dataframe with full list of plots and their information.
+        """
+        return self.metadata.PLOT_LIST
