@@ -2,6 +2,7 @@ import pandas as pd
 from flosp.data import Data
 from flosp.data import MetaData
 from flosp import core
+from flosp.plotting import HistoricalPlotting,  WeeklyPlotting, PeriodPlotting
 
 class Interface:
     """ Class which contains all actions (methods) available to user.
@@ -76,7 +77,48 @@ class Interface:
         df = getattr(self.data,name) # extract df
         return(df)
 
-    def plot(self):
-        """ Plot all graphs and tables possible with current analysis """ 
-        pass
+    def plot_historical(self, EDyears, IPyears, required_plot_no='all'):
+        """ Plot all graphs and tables possible with current analysis.
+        Input
+        -----
+        EDyears, list of int, contains each year that will be included in ED plots.
+        IPyears, list of int, contains each year that will be included in IP plots.
+        
+        Ouput
+        -----
+        All plots saved to dir with corresponding tables in csv format.
+        All figures saved in self.data. .
 
+        """ 
+        HistoricalPlotting(self.data, self.metadata, EDyears, IPyears, required_plot_no)
+        return
+
+    def plot_period(self, dt_start, dt_end, required_plot_no='all'):
+        """ 
+        Plot all graphs and tables possible with current analysis.
+        Input
+        -----
+        start, datetime, start window for period of plotting.
+        end, datetime, end of window for period of plotting. ]
+        
+        Output
+        ------
+
+
+        """ 
+        PeriodPlotting(self.data, self.metadata, dt_start, dt_end, required_plot_no)
+        return
+
+    def plot_week(self, start_week, required_plot_no='all'):
+        """ 
+        Plot all graphs and tables possible with current analysis.
+        Input
+        -----
+        start_week, datetime, start of window for plots.
+        
+        Output
+        ------
+
+        """ 
+        WeeklyPlotting(self.data, self.metadata, dt_weekstart, required_plot_no)
+        return

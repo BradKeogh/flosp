@@ -4,9 +4,18 @@ import imp
 
 class Data:
     """
-    class where all data is stored
+    Class where all data is stored.
     """
     def __init__(self):
+        self.plots = Plots()
+        pass
+
+class Plots:
+    """
+    Class used to contain all post figure creation figs and tables.
+    """
+    def __init__(self):
+        # put table of figure numbers and related captions here?
         pass
 
 
