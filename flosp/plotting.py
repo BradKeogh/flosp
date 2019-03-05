@@ -22,16 +22,23 @@ class PeriodPlotting:
         self.metadata = metadata
         self.dt_start = dt_start
         self.dt_end = dt_end
+
+        #### get only period plots in list
+        plot_list = self.metadata.PLOT_LIST
+        plot_list_period = plot_list.query('plot_type == "period"')
         
         #### call all plot methods unless required_plot_no
         if required_plot_no == 'all':
-            for plot_no in ['1']: #### NOTE: must rerplace this with list from general - once creater (filter for Period only plots)
-                exec('self.' + 'plot' + plot_no +'()')
+            for plot_no in plot_list_period.plot_number.values: #### NOTE: must rerplace this with list from general - once creater (filter for Period only plots)
+                exec('self.' + 'plot' + str(plot_no) +'()')
         else:
-            exec('self.' + str(required_plot_no) + '()')
+            exec('self.' + 'plot' + str(required_plot_no) + '()')
         return
 
-    def plot1(self):
+    def plot9(self):
+        #### plot data
+        plot_number = 9
+        plot_info = self.metadata.PLOT_LIST.query('plot_number == plot_number')
         #### ED hourly arrival discharge curves
         # filter for period selected
         pat = self.data.ED
@@ -39,7 +46,6 @@ class PeriodPlotting:
         pat_filtered = pat[mask]
 
         # make table for plot
-
         arr = pat_filtered[['ARRIVAL_hour','PSEUDONYMISED_PATIENT_ID']].groupby(['ARRIVAL_hour']).count()#.plot(ax=ax)
         dep = pat_filtered[['DEPARTURE_hour','PSEUDONYMISED_PATIENT_ID']].groupby(['DEPARTURE_hour']).count()#.plot(ax=ax)
         arr.rename(columns={'PSEUDONYMISED_PATIENT_ID':'Arrivals'},inplace=True)
@@ -48,13 +54,16 @@ class PeriodPlotting:
 
         # plot
         fig, ax = plt.subplots()
-        plt.suptitle('ED average hourly arrivals & departures')
+        plt.suptitle(plot_info['plot_name'].values[0])
         table.plot(ax=ax)
         ax.set_xticks(np.arange(0,25,2));
 
-        self.data.plots.table1 = table
-        self.data.plots.fig1 = fig
+        #### save figure and table data
+        setattr(self.data.plots, 'table' + str(plot_number), table)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
         return
+    
+
 
 
 class WeeklyPlotting:
