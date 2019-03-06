@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from functools import reduce
 
+from flosp.basic_tools import make_callender_columns
+
 class Aggregate:
     """ 
     Aggregates new tables from record-level data. i.e. takes ED attendance table and produces hourly or/and daily tables.
@@ -150,7 +152,7 @@ class Aggregate:
 
 
         # MAX columns
-        for column in ['IPocc_total','IPocc_elec_nonelec']:
+        for column in ['IPocc_total','IPocc_elec_nonelec','ED_occ_total']:
             daily_series = self.data.HOURLY[column].resample('D').max()
             daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index
             daily_df.rename(columns={column:column + '_MAX'},inplace=True) # add suffix to column name in daily df
@@ -166,6 +168,12 @@ class Aggregate:
 
         # combine into new table, assign to data class
         daily_dfs_merged = merge_dfs_with_datetime_index(daily_columns_list)
+
+        # make callender columns
+        daily_dfs_merged['date'] = daily_dfs_merged.index
+
+        make_callender_columns(daily_dfs_merged,'date','date')
+
         self.data.DAILY = daily_dfs_merged
         return
 
