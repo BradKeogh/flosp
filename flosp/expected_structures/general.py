@@ -19,8 +19,8 @@ data = [
     [12, 'Admission by age group by year', 'hist', ['IP']],
     [13, 'Patient volume by type (table)', 'hist', ['IP']], # NOTE: S7 IP
     [14, 'Emergency patient admission route numbers', 'hist', ['IP']],
-    [15, 'Variation in patient numbers by day of week (ED)', 'period', ['ED']],
-    [16, 'Variation in patient numbers by day of week (Inpatient)', 'period', ['IP']],
+    [15, 'Variation in ED patient numbers by day of week (ED)', 'period', ['ED']],
+    [16, 'Variation in Inpatient numbers by day of week (excluding day cases)', 'period', ['IP']],
     [17, 'Peak ED occupancy by day of week','period',['ED']],
     [18, 'Peak ED occupancy by month of year', 'period', ['ED']],
     [19, 'Average ED occupancy by month', 'hist', ['ED']],

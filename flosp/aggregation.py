@@ -67,6 +67,7 @@ class Aggregate:
         nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
         elec_query = "ADM_METHOD in ['11','12','13']" # 11,12,13
         elec_nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81','11','12','13']"
+        excludingdaycases_query = "ADM_TYPE in ['Non-Elective','Elective']"
 
         #### Aggregate IP columns
         # events
@@ -76,6 +77,7 @@ class Aggregate:
         IP_admissions_nonelec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_nonelec', query=nonelec_query)
         IP_admissions_elec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_elec', query=elec_query)
         IP_admissions_elec_nonelec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_elec_nonelec', query=elec_nonelec_query)
+        IP_admissions_excludingdaycases = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_excludingdaycases', query=excludingdaycases_query)
         
         IP_discharges_nonelec = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_nonelec', query=nonelec_query)
         IP_discharges_elec = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_elec', query=elec_query)
@@ -86,7 +88,7 @@ class Aggregate:
         # occupancy
         IPocc_total = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_total')
         IPocc_elec_nonelec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_elec_nonelec', query = elec_nonelec_query)
-
+        IPocc_excludingdaycases = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_excludingdaycases', query = excludingdaycases_query)
         # df_new = count_hourly_occupancy2(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','new_col')
 
 
@@ -97,6 +99,7 @@ class Aggregate:
             ED_departures,
 
             IP_admissions_total,
+            IP_admissions_excludingdaycases,
             IP_admissions_elec,
             IP_admissions_elec_nonelec,
             IP_admissions_nonelec,
@@ -106,6 +109,7 @@ class Aggregate:
             IP_discharges_elec,
             IP_discharges_elec_nonelec,
             ]
+
         events_df_merged = merge_dfs_with_datetime_index(events_dfs)
         events_df_merged = events_df_merged.resample('H').sum() # fills in missing hours from datetime index. using .sum() puts zeroes into the missing values of the index.
         events_df_merged.fillna(value=0, inplace=True)
@@ -115,7 +119,13 @@ class Aggregate:
         
         ## Occupancies - merge, reindex, ffill
 
-        occ_dfs = [ED_occ_total, IPocc_total, IPocc_elec_nonelec]
+        occ_dfs = [
+            ED_occ_total,
+            IPocc_total,
+            IPocc_elec_nonelec,
+            IPocc_excludingdaycases,
+            ]
+
         occ_df_merged = merge_dfs_with_datetime_index(occ_dfs)
         occ_df_merged = occ_df_merged.resample('H').ffill() # fill missing hours in datetime index. ffill from previous occupancy that has been calculated.
         events_df_merged.fillna(value='ffill', inplace=True)
@@ -138,7 +148,7 @@ class Aggregate:
         #### perform index resample (to daily) on each column in hourly status
         # SUMMED COLUMNS
         daily_columns_list = []
-        for column in ['ED_arrivals','ED_departures']:
+        for column in ['ED_arrivals','ED_departures','IP_admissions_excludingdaycases']:
             daily_series = self.data.HOURLY[column].resample('D').sum()
             daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index 
             daily_columns_list.append(daily_df)
@@ -152,7 +162,7 @@ class Aggregate:
 
 
         # MAX columns
-        for column in ['IPocc_total','IPocc_elec_nonelec','ED_occ_total']:
+        for column in ['IPocc_total','IPocc_elec_nonelec','ED_occ_total','IPocc_excludingdaycases']:
             daily_series = self.data.HOURLY[column].resample('D').max()
             daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index
             daily_df.rename(columns={column:column + '_MAX'},inplace=True) # add suffix to column name in daily df

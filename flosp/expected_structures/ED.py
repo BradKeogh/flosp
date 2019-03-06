@@ -12,7 +12,7 @@ dataRAW_expected_col_dtypes = {
 'FIRSTDOC_FOR_TREATMENT_DTTM':object,
 'ADM_REQUEST_DTTM':object,
 'ADM_REQUEST_LOC_DESCRIPTION':str,
-'ADMISSION_FLAG':str,
+'ADMISSION_FLAG':int,
 'DEPARTURE_DTTM':object,
 'STREAM_LOCAL_CODE':str,
 }
