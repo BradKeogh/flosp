@@ -10,6 +10,7 @@ dataRAW_expected_col_dtypes = {
 'ADM_DTTM':object,
 'ADM_SOURCE_CODE':str,
 'ADM_METHOD':str,
+'ADM_TYPE':str,
 'DIS_DTTM':object,
 'DIS_DESTINATION':str,
 'DIS_METHOD':str,
@@ -17,7 +18,7 @@ dataRAW_expected_col_dtypes = {
 'LOCATION_START':object,
 'LOCATION_END':object,
 'LOCATION_NAME':str,
-'SPELL_LOS':int
+'SPELL_LOS':int,
 }
 
 dataRAW_expected_datetime_cols = [
