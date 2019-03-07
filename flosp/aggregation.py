@@ -57,17 +57,24 @@ class Aggregate:
         # ED_breaches # query: breach patients, 'BREACH DTTM'
         #  
         # occupancy counting
-        ED_occ_total = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','ED_occ_total')
+        EDocc_total = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_total')
 
         # col with breach time -> so can count events
         # optional query for count_hourly_events
 
         # Definitions found here: https://www.datadictionary.nhs.uk/data_dictionary/attributes/a/add/admission_method_de.asp?shownav=1?query=%22admission+type%22&rank=3.012927&shownav=1
 
+        ## IP queries
         nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
         elec_query = "ADM_METHOD in ['11','12','13']" # 11,12,13
         elec_nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81','11','12','13']"
         excludingdaycases_query = "ADM_TYPE in ['Non-Elective','Elective']"
+        onlydaycases_query = "ADM_TYPE in ['Day Case']"
+        ## ED queries
+        breach_query = "BREACH_FLAG in [1]" # lookat records with only patients who breach.
+        admission_query = "ADMISSION_FLAG in [1]" # look at records with only patients who are admitted.
+
+
 
         #### Aggregate IP columns
         # events
@@ -86,9 +93,21 @@ class Aggregate:
         
 
         # occupancy
+        
+        EDocc_total = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_total')
+        EDocc_breaching_patients = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_breaching_patients', query=breach_query)
+        EDocc_awaiting_adm = count_hourly_occupancy(self.data.ED,'ADM_REQUEST_DTTM','DEPARTURE_DTTM','EDocc_awaiting_adm', query=admission_query)
+
         IPocc_total = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_total')
+
         IPocc_elec_nonelec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_elec_nonelec', query = elec_nonelec_query)
+
+        IPocc_elec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_elec', query = elec_query)
+
         IPocc_excludingdaycases = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_excludingdaycases', query = excludingdaycases_query)
+
+        IPocc_daycases = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_daycases', query = onlydaycases_query)
+        
         # df_new = count_hourly_occupancy2(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','new_col')
 
 
@@ -120,10 +139,15 @@ class Aggregate:
         ## Occupancies - merge, reindex, ffill
 
         occ_dfs = [
-            ED_occ_total,
+            EDocc_total,
+            EDocc_breaching_patients,
+            EDocc_awaiting_adm,
+
             IPocc_total,
+            IPocc_elec,
             IPocc_elec_nonelec,
             IPocc_excludingdaycases,
+            IPocc_daycases,
             ]
 
         occ_df_merged = merge_dfs_with_datetime_index(occ_dfs)
@@ -162,7 +186,7 @@ class Aggregate:
 
 
         # MAX columns
-        for column in ['IPocc_total','IPocc_elec_nonelec','ED_occ_total','IPocc_excludingdaycases']:
+        for column in ['IPocc_total','IPocc_elec_nonelec','EDocc_total','IPocc_excludingdaycases']:
             daily_series = self.data.HOURLY[column].resample('D').max()
             daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index
             daily_df.rename(columns={column:column + '_MAX'},inplace=True) # add suffix to column name in daily df

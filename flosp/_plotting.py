@@ -110,7 +110,7 @@ class plotED():
         ##### table 4
 
         ##### table 5
-        temp = df.groupby(['arrive_year','adm_flag']).sum()['breach_flag'].unstack()
+        temp = df.groupby(['arrive_year','adm_flag']).sum()['BREACH_FLAG'].unstack()
         temp['perc_breach_adm'] = 100*temp[1]/(temp[0] + temp[1])
         temp.columns.name=None
         temp.rename(columns={0:'no. of breach (non-adm)',1:'no. of breach (adm)', 'perc_breach_adm':'% of breach from adm'},inplace=True)

@@ -116,7 +116,7 @@ class IO:
         make new columns of breach flag and breach datetime. Requires: waiting_time column in minutes.
         """
         df = self.RawData
-        df['breach_flag'] = (df['waiting_time'] > 4*60).astype(int)
+        df['BREACH_FLAG'] = (df['waiting_time'] > 4*60).astype(int)
         df['breach_datetime'] = df['ARRIVAL_DTTM'] + pd.Timedelta(4,unit='h')
         self.RawData = df
         # setattr(self.data, self.RawName, df)

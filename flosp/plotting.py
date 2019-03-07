@@ -328,7 +328,7 @@ class PeriodPlotting:
 
         #### plot
         fig,ax = plt.subplots()
-        table = daily_filtered[['ED_occ_total_MAX','date_dayofweek']]
+        table = daily_filtered[['EDocc_total_MAX','date_dayofweek']]
         table.boxplot(by='date_dayofweek',ax=ax);
         ax.set_xticklabels(daysofweek);
         ax.set_xlabel('');
@@ -351,7 +351,7 @@ class PeriodPlotting:
 
         #### plot
         fig,ax = plt.subplots()
-        table = daily_filtered[['ED_occ_total_MAX','date_month']]
+        table = daily_filtered[['EDocc_total_MAX','date_month']]
         table.boxplot(by='date_month',ax=ax);
         # ax.set_xticklabels(daysofweek);
         ax.set_xlabel('');
@@ -430,7 +430,119 @@ class PeriodPlotting:
 class WeeklyPlotting:
     """ Class produces weekly plots for week commencing when the user has input. """
     def __init__(self, data, metadata, dt_weekstart, required_plot_no):
+        #### initialise all data
+        self.data = data
+        self.metadata = metadata
+        self.dt_weekstart = dt_weekstart
 
-        pass
+        #### get only period plots in list
+        plot_list = self.metadata.PLOT_LIST
+        plot_list_period = plot_list.query('plot_type == "weekly"')
+        
+        #### call all plot methods unless required_plot_no
+        if required_plot_no == 'all':
+            for plot_no in plot_list_period.plot_number.values: #### NOTE: must rerplace this with list from general - once creater (filter for Period only plots)
+                exec('self.' + 'plot' + str(plot_no) +'()')
+        else:
+            exec('self.' + 'plot' + str(required_plot_no) + '()')
+        return
+    
+    def plot23(self):
+        """ Creates plots and tables for a week of ED activity: plot of occupancy & of arrivals/departures """
+        # data
+        plot_number = 23
+        days = 7
+        df = self.data.HOURLY
+
+        size = (13,7)
+        #### get start and end times as datetimes
+        # s = pd.datetime(start[0],start[1],start[2])
+        s = self.dt_weekstart
+        print(s)
+        e = s + pd.Timedelta(days,unit='d')
+        
+        #### check and warn if start time is not a monday
+        if s.weekday() != 0:
+            print('Warning: date does not start on a Monday, day:' + str(s.weekday()))
+            #warnings.warn('The date does not start on a monday.')
+        
+        #### ED occ plot
+        EDocccols = ['EDocc_total','EDocc_breaching_patients','EDocc_awaiting_adm']
+        # name  = '-'.join([str(x) for x in start]) + '_ED_occ' +  addname
+        figA, axA = plt.subplots()
+        tableA = df[s:e][EDocccols]
+        tableA.plot.area(stacked=False,figsize=size,ax=axA)
+        axA.set_ylim(0,50)
+        axA.set_ylabel('Number of patients in ED')
+        axA.legend(frameon=True)
+    #     fig.savefig('./../hhft/visualisataions_for_hhft_slides(IP)/plots/' + name + '.png', dpi=300)
+        
+        
+        #### ED adm/dis plot
+        EDflowcols = ['ED_arrivals','ED_departures']
+        # name  = '-'.join([str(x) for x in start]) + '_ED_flow' +  addname
+        figB, axB = plt.subplots()
+        tableB = df[s:e][EDflowcols].rolling(3).mean()
+        tableB.plot(figsize=size,ax=axB)
+        axB.set_ylim(0,25)
+        axB.set_ylabel('Number of attendances and leaving ED per hour')
+        axB.legend(frameon=True)
+    #     fig.savefig('./../hhft/visualisataions_for_hhft_slides(IP)/plots/' + name + '.png', dpi=300)
+
+        setattr(self.data.plots, 'table' + str(plot_number) + 'A', tableA)
+        setattr(self.data.plots, 'fig' + str(plot_number) + 'A', figA)
+
+        setattr(self.data.plots, 'table' + str(plot_number) + 'B', tableB)
+        setattr(self.data.plots, 'fig' + str(plot_number) + 'B', figB)
+        
+        return
+
+    def plot24(self):
+        """ Creates plots and tables for a week of ED activity: plot of occupancy & of arrivals/departures. """
+        # data
+        plot_number = 24
+        days = 7
+        df = self.data.HOURLY
+
+        size = (13,7)
+        #### get start and end times as datetimes
+        # s = pd.datetime(start[0],start[1],start[2])
+        s = self.dt_weekstart
+        print(s)
+        e = s + pd.Timedelta(days,unit='d')
+        
+        #### check and warn if start time is not a monday
+        if s.weekday() != 0:
+            print('Warning: date does not start on a Monday, day:' + str(s.weekday()))
+            #warnings.warn('The date does not start on a monday.')
+
+        #### IP occ plot
+        IPocccols = ['IPocc_total','IPocc_elec_nonelec','IPocc_daycases','IPocc_elec']
+        # name  = '-'.join([str(x) for x in start]) + '_IP_occ' +  addname
+        figA, axA = plt.subplots()
+        tableA = df[s:e][IPocccols]
+        tableA.plot.area(stacked=False,figsize=size,ax=axA)
+        axA.set_ylim(0,550)
+        axA.set_ylabel('Number of attendances and leaving ED per hour')
+        axA.legend(frameon=True)
+        #     fig.savefig('./../hhft/visualisataions_for_hhft_slides(IP)/plots/' + name + '.png', dpi=300)
+        
+        #### IP adm/dis plot
+        IPcols = ['IP_admissions_total','IP_discharges_total']
+        # name  = '-'.join([str(x) for x in start]) + '_IP_flow' +  addname
+        figB, axB = plt.subplots()
+        tableB = df[s:e][IPcols].rolling(1).mean()
+        tableB.plot(figsize=size,ax=axB);
+        axB.set_ylim(0,50)
+        axB.set_ylabel('Number of inpatients')
+        axB.legend(frameon=True)
+
+        setattr(self.data.plots, 'table' + str(plot_number) + 'A', tableA)
+        setattr(self.data.plots, 'fig' + str(plot_number) + 'A', figA)
+        
+        setattr(self.data.plots, 'table' + str(plot_number) + 'B', tableB)
+        setattr(self.data.plots, 'fig' + str(plot_number) + 'B', figB)
+        
+        return
 
 

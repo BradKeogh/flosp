@@ -64,7 +64,7 @@ class TestCompleteAggregation():
             'ED_departures':24,
             'IP_admissions_total':24,
             'IP_discharges_total':24,
-            'ED_occ_total':48,          
+            'EDocc_total':48,          
             'IPocc_total':1752,
             'IP_admissions_nonelec':12,
             'IP_discharges_elec':12,

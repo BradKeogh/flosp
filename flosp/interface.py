@@ -109,7 +109,7 @@ class Interface:
         PeriodPlotting(self.data, self.metadata, dt_start, dt_end, required_plot_no)
         return
 
-    def plot_week(self, start_week, required_plot_no='all'):
+    def plot_week(self, dt_weekstart, required_plot_no='all'):
         """ 
         Plot all graphs and tables possible with current analysis.
         Input
