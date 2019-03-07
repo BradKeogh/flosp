@@ -15,6 +15,7 @@ dataRAW_expected_col_dtypes = {
 'ADMISSION_FLAG':int,
 'DEPARTURE_DTTM':object,
 'STREAM_LOCAL_CODE':str,
+'BREACH_FLAG':int,
 }
 
 dataRAW_expected_datetime_cols = [
