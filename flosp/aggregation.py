@@ -159,6 +159,11 @@ class Aggregate:
         hourly = merge_dfs_with_datetime_index([events_df_merged, occ_df_merged])
         # create final columns as necessary
         hourly['IPadm_minus_dis_elec_nonelec'] = hourly['IP_admissions_elec_nonelec'] - hourly['IP_discharges_elec_nonelec']
+
+        #### make datetime columns
+        hourly['date'] = hourly.index
+        hourly = make_callender_columns(hourly,'date','date')
+
         self.data.HOURLY = hourly
         # self.data.HOURLY2 = occ_df_merged
         return
@@ -206,7 +211,7 @@ class Aggregate:
         # make callender columns
         daily_dfs_merged['date'] = daily_dfs_merged.index
 
-        make_callender_columns(daily_dfs_merged,'date','date')
+        daily_dfs_merged = make_callender_columns(daily_dfs_merged,'date','date')
 
         self.data.DAILY = daily_dfs_merged
         return

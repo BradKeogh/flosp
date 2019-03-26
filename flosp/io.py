@@ -47,6 +47,9 @@ class IO:
         if patient_record_type == 'ED':            
             self.make_wait_columns_ED()
             self.make_breach_columns()
+        # some converions only for IP
+        if patient_record_type == 'IP':
+            self.make_simple_adm_method_column()
         
 
         #### save clean data
@@ -139,6 +142,26 @@ class IO:
 
         self.RawData = df
         # setattr(self.data, self.RawName, df)
+        return
+
+    def make_simple_adm_method_column(self):
+        """ Makes new column with 4 catagories of admission method. Based on the Admission method column.
+        """
+        df = self.RawData
+
+        df['ADM_METHOD_simple'] = 'other'
+
+        query = df.query("ADM_METHOD in ['21','2A']")
+        df.loc[query.index,'ADM_METHOD_simple'] = 'ED'
+
+        query = df.query("ADM_METHOD in ['31','32']")
+        df.loc[query.index,'ADM_METHOD_simple'] = 'Maternity'
+
+        query = df.query("ADM_METHOD in ['22']")
+        df.loc[query.index,'ADM_METHOD_simple'] = 'GP'
+        
+        self.RawData = df
+
         return
 
     def save_clean_to_pickle(self):

@@ -10,8 +10,302 @@ daysofweek = ['Mon','Tue','Wed','Thur','Fri','Sat','Sun']
 class HistoricalPlotting:
     """ Class produces all historical plots automatically. """
     def __init__(self, data, metadata, EDyears, IPyears, required_plot_no):
+        #### save arguments as attributes 
+        self.data = data
+        self.metadata = metadata
+        self.EDyears = EDyears
+        self.IPyears = IPyears
+
+        #### get only period plots in list
+        plot_list = self.metadata.PLOT_LIST
+        plot_list_historical = plot_list.query('plot_type == "hist"')
         
-        pass
+        #### call all plot methods unless required_plot_no
+        if required_plot_no == 'all':
+            for plot_no in plot_list_historical.plot_number.values: #### NOTE: must rerplace this with list from general - once creater (filter for Period only plots)
+                exec('self.' + 'plot' + str(plot_no) +'()')
+        else:
+            exec('self.' + 'plot' + str(required_plot_no) + '()')
+        return
+    
+    def plot1(self):
+        """ Create table and plot for figure 1. """
+        plot_number = 1
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'ED')
+
+        #### get yearly table
+        yearly = pat_filtered.groupby('ARRIVAL_year').agg({'PSEUDONYMISED_PATIENT_ID':'count','ADMISSION_FLAG':'sum'})
+        yearly.rename(columns={'ADMISSION_FLAG':'ED admissions','PSEUDONYMISED_PATIENT_ID':'ED attendances'},inplace=True)
+        yearly['conversion ratio'] = 100* yearly['ED admissions'] / yearly['ED attendances']
+        table = yearly.round(1)
+        
+        #### plot
+        fig, ax = plt.subplots()
+        width= 0.2
+        yearly['ED attendances'].plot.bar(ax=ax,position=1,width=width,color='xkcd:blue',figsize=(5,4))
+        ax2 = ax.twinx()
+        yearly['ED admissions'].plot.bar(ax=ax2,position=0,width=width,color='xkcd:red')
+        ax2.grid(False);
+
+        ax.set_ylabel('attendances');
+        ax2.set_ylabel('admissions');
+        ax.set_xlabel('');
+        ax.set_title(title)
+
+        lines, labels = ax.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax2.legend(lines + lines2, labels + labels2, loc='lower right',frameon=True)
+
+        setattr(self.data.plots, 'table' + str(plot_number), table)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
+
+        return
+
+    def plot2(self):
+        " create figure and table for plot 2."
+        plot_number = 2
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'ED')
+
+        #### get tables
+        tableA = pat_filtered.groupby(['ARRIVAL_year','age_group']).count()['PSEUDONYMISED_PATIENT_ID'].unstack()
+        tableB = pat_filtered[pat_filtered.ADMISSION_FLAG == 1].groupby(['ARRIVAL_year','age_group']).count()['PSEUDONYMISED_PATIENT_ID'].unstack()
+        
+        #### plot 
+        fig, ax = plt.subplots(1,2,figsize=(14,5))
+
+        tableA.plot(kind='bar',ax=ax[0]);
+        ax[0].set_ylabel('ED attendances (yearly)');
+        ax[0].set_xlabel('year');
+        ax[0].legend(title = 'age group',frameon=True,loc='lower right');
+
+        tableB.plot(kind='bar',ax=ax[1]);
+        ax[1].set_ylabel('ED admissions (yearly)');
+        ax[1].set_xlabel('year');
+        ax[1].legend(title = 'age group',frameon=True,loc='lower right');
+        fig.suptitle(title)
+
+        #### save data
+        setattr(self.data.plots, 'table' + str(plot_number) + 'A', tableA)
+        setattr(self.data.plots, 'table' + str(plot_number) + 'B', tableB)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
+        
+        return
+
+    def plot5(self):
+        " create figure and table for plot 2."
+        plot_number = 5
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'ED')
+        
+        #### filter further for clean wait times
+        exclude_index = pat_filtered.query('arr_triage_wait < 0 or arr_dr_wait < 0 or arr_adm_req_wait < 0 or waiting_time < 0'
+                          +'or arr_triage_wait > 24*60 or arr_dr_wait > 24*60 or arr_adm_req_wait > 24*60'
+                          'or waiting_time > 24*60' + 'or adm_req_dep_wait < 0 or dr_adm_req_wait <0 or dr_dep_wait < 0'
+                          ).index
+
+        pat2 = pat_filtered.loc[~pat_filtered.index.isin(exclude_index)]
+
+        wait_col2 = ['arr_dr_wait','dr_adm_req_wait','adm_req_dep_wait','dr_dep_wait']
+        
+        #### get tables
+        tableA = pat2[pat2.ADMISSION_FLAG == 0].groupby('ARRIVAL_year')[wait_col2[0],wait_col2[3]].median()
+        tableB = pat2[pat2.ADMISSION_FLAG == 1].groupby('ARRIVAL_year')[wait_col2[0],wait_col2[3]].median()
+        
+
+        #### plot figures
+        fig, ax = plt.subplots(1,2, figsize=(14,5))
+
+        tableA.plot.bar(stacked=True,ax=ax[0])
+        ax[0].set_ylabel('Median time in department (mins)');
+        ax[0].set_ylim([0,250]);
+        ax[0].set_xlabel('');
+        ax[0].legend(['arrival -> dr','dr -> departure'],frameon=True);
+        ax[0].set_title('Non-admitted patients');
+
+        tableB.plot.bar(stacked=True,ax=ax[1])
+        ax[1].set_ylabel('Median time in department (mins)');
+        ax[1].set_xlabel('');
+        ax[1].legend(['arrival -> dr','dr -> departure'],frameon=True,loc='center right');
+        ax[1].set_title('Admitted patients');
+        ax[1].set_ylim([0,250]);
+
+        fig.suptitle(title)
+
+        #### save data
+        setattr(self.data.plots, 'table' + str(plot_number) + 'A', tableA)
+        setattr(self.data.plots, 'table' + str(plot_number) + 'B', tableB)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
+
+        return
+
+    def plot19(self):
+        """ Create plot & table 19.
+        NOTE: seems to be an issue with the values produced in plot using test data->simple_day.
+        Possible issue with the aggergation module.
+        """
+        plot_number = 19
+
+        plot_list = self.metadata.PLOT_LIST
+        title = plot_list.query('plot_number == ' + str(plot_number))['plot_name'].values[0]
+        years = self.EDyears
+        occ = self.data.DAILY
+        occ_filtered  = occ.query('date_year in ' + str(years))
+        
+        #### get tables
+        table = occ_filtered.groupby(['date_month','date_year']).median()['EDocc_total_MAX'].unstack()
+
+        #### plot figures
+        fig, ax = plt.subplots(figsize=(9,5))
+        table.plot(kind='bar',ax=ax)
+        ax.set_xlabel('Month');
+        ax.set_ylabel('Median peak daily ED occupancy');
+        fig.suptitle(title);
+        ax.legend(loc='lower right',frameon=True,title='Year')
+
+        setattr(self.data.plots, 'table' + str(plot_number), table)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
+
+        return
+
+    def plot20(self):
+        " create table and plot for 20."
+        plot_number = 20
+
+        plot_list = self.metadata.PLOT_LIST
+        title = plot_list.query('plot_number == ' + str(plot_number))['plot_name'].values[0]
+        years = self.IPyears
+        occ = self.data.DAILY
+        occ_filtered  = occ.query('date_year in ' + str(years))
+
+        #### get table
+        table = occ_filtered.groupby(['date_month','date_year']).median()['IPocc_elec_nonelec_MAX'].unstack()
+
+        #### get figure
+        fig, ax = plt.subplots(figsize=(9,5))
+        
+        table.plot(kind='bar',ax=ax)
+        ax.set_xlabel('Month');
+        ax.set_ylabel('Median IP max daily occupancy');
+        fig.suptitle(title);
+        ax.legend(loc='lower right',frameon=True,title='Year')
+
+        setattr(self.data.plots, 'table' + str(plot_number), table)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
+
+        return
+
+    def plot11(self):
+        ""
+        plot_number = 11
+
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPSPELL')
+        #### filter for baby births
+        pat_filtered = pat_filtered.query("ADM_METHOD not in ['82','83','2C']")
+
+        #### get tables
+        table = pat_filtered.groupby(['ADM_year','ADM_TYPE']).count()['PSEUDONYMISED_PATIENT_ID'].unstack()
+
+        #### make plot
+        fig, ax =plt.subplots(figsize=(7,5))
+        table.plot(kind='bar',ax=ax)
+        ax.set_ylabel('number of admissions')
+        ax.legend(frameon=True,loc='center left')
+        ax.set_xlabel('')
+        ax.set_title(title)
+
+
+        setattr(self.data.plots, 'table' + str(plot_number), table)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
+
+        return
+
+    def plot12(self):
+        ""
+        plot_number = 12
+
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPSPELL')
+        #### filter for baby births
+        pat_filtered = pat_filtered.query("ADM_METHOD not in ['82','83','2C']")
+
+        #### get table
+        table = pat_filtered.groupby(['ADM_year','age_group']).count().unstack()['PSEUDONYMISED_PATIENT_ID']
+
+        #### plotting
+        fig, ax =plt.subplots(figsize=(5,5))
+        table.plot(kind='bar',stacked=True,ax=ax)
+        ax.set_ylabel('number of admissions')
+        ax.legend(frameon=True,loc='upper left',title='Age group')
+        ax.set_xlabel('')
+        ax.set_title(title)
+
+        setattr(self.data.plots, 'table' + str(plot_number), table)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
+
+        return
+
+    def plot13(self):
+        "This is actually a table. It is a merge of the tables from plot 1 and plot 11."
+        plot_number = 13
+
+        if hasattr(self.data.plots, 'table1') & hasattr(self.data.plots, 'table11'):
+            table = self.data.plots.table1.merge(self.data.plots.table11, left_index=True, right_index=True)
+            setattr(self.data.plots, 'table' + str(plot_number), table)
+            print(table)
+        else:
+            print('Table 13 not produced as required both fig1 and fig 11 to be made beforehand.')
+        
+        return
+
+    def plot14(self):
+        ""
+        plot_number = 12
+
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPSPELL')
+        #### filter for baby births
+        pat_filtered = pat_filtered.query("ADM_METHOD not in ['82','83','2C']")
+        ####
+
+        #### table
+        table = pat_filtered.query('ADM_TYPE == "Non-Elective"').groupby(['ADM_year','ADM_METHOD_simple']).count()['PSEUDONYMISED_PATIENT_ID'].unstack()
+
+        #### plotting
+        fig, ax = plt.subplots(figsize=(5,5))
+        table.plot(kind='bar',stacked=True,ax=ax)
+        ax.set_ylabel('number of admissions');
+        ax.legend(frameon=True,loc='lower right',title='Admission route');
+        ax.set_xlabel('');
+        ax.set_title(title)
+
+        setattr(self.data.plots, 'table' + str(plot_number), table)
+        setattr(self.data.plots, 'fig' + str(plot_number), fig)
+
+        return
+
+    def get_historical_plot_info(self, plot_number, data_name):
+        """ Provided plot number retrieve plot info and filtered dataframe for patient level data. """
+        #### plot data
+        plot_info = self.metadata.PLOT_LIST.query('plot_number == plot_number')
+        #### ED hourly arrival discharge curves
+        # filter for period selected
+        pat = getattr(self.data, data_name)
+
+        if data_name == 'ED':
+            # pat = self.data.ED
+            years = self.EDyears
+            pat_filtered = pat.query('ARRIVAL_year in ' + str(years) +' or DEPARTURE_year in ' + str(years))
+        
+        elif data_name =='IP':
+            years = self.IPyears
+            pat_filtered = pat.query('ADM_year in ' + str(years) +' or DIS_year in ' + str(years))
+        
+        elif data_name == 'IPSPELL':
+            years = self.IPyears
+            pat_filtered = pat.query('ADM_year in ' + str(years) +' or DIS_year in ' + str(years))
+        
+        title = plot_info.query('plot_number == ' + str(plot_number))['plot_name'].values[0]
+
+        return(plot_info, pat_filtered, title)
+
+
 
 
 class PeriodPlotting:
