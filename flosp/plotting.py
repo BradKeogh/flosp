@@ -26,6 +26,9 @@ class HistoricalPlotting:
                 exec('self.' + 'plot' + str(plot_no) +'()')
         else:
             exec('self.' + 'plot' + str(required_plot_no) + '()')
+        
+        #### save tables and figures in this initialisatation
+
         return
     
     def plot1(self):
