@@ -5,6 +5,7 @@ import pandas as pd
 from functools import reduce
 
 from flosp.basic_tools import make_callender_columns
+from flosp import core
 
 class Aggregate:
     """ 
@@ -41,6 +42,7 @@ class Aggregate:
         #### rename LOCATION_NAME to 'FIRST_LOCATION'
         df.rename(columns={'LOCATION_NAME':'FIRST_LOCATION'},inplace=True)
         self.data.IPSPELL = df
+        self.save_clean_to_pickle(self.data.IPSPELL, 'IPspell')
         return
 
     def make_hourly_table(self):
@@ -57,7 +59,7 @@ class Aggregate:
         # ED_breaches # query: breach patients, 'BREACH DTTM'
         #  
         # occupancy counting
-        EDocc_total = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_total')
+        # EDocc_total = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_total')
 
         # col with breach time -> so can count events
         # optional query for count_hourly_events
@@ -68,6 +70,7 @@ class Aggregate:
         nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
         elec_query = "ADM_METHOD in ['11','12','13']" # 11,12,13
         elec_nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81','11','12','13']"
+        nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
         excludingdaycases_query = "ADM_TYPE in ['Non-Elective','Elective']"
         onlydaycases_query = "ADM_TYPE in ['Day Case']"
         ## ED queries
@@ -78,13 +81,14 @@ class Aggregate:
 
         #### Aggregate IP columns
         # events
+        # NOTE: somewhere in this block of code there is a pink copy warning from: df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour 
         IP_admissions_total = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_total')
         IP_discharges_total = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_total')
 
         IP_admissions_nonelec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_nonelec', query=nonelec_query)
         IP_admissions_elec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_elec', query=elec_query)
         IP_admissions_elec_nonelec = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_elec_nonelec', query=elec_nonelec_query)
-        IP_admissions_excludingdaycases = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_excludingdaycases', query=excludingdaycases_query)
+        # IP_admissions_excludingdaycases = count_hourly_events(self.data.IPSPELL,'ADM_DTTM','IP_admissions_excludingdaycases', query=excludingdaycases_query)
         
         IP_discharges_nonelec = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_nonelec', query=nonelec_query)
         IP_discharges_elec = count_hourly_events(self.data.IPSPELL,'DIS_DTTM','IP_discharges_elec', query=elec_query)
@@ -93,22 +97,15 @@ class Aggregate:
         
 
         # occupancy
+        # NOTE: IP count_hourly_occupancy takes much longer than ED for some reason. Even when the number of records are smaller. 
         
         EDocc_total = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_total')
         EDocc_breaching_patients = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_breaching_patients', query=breach_query)
         EDocc_awaiting_adm = count_hourly_occupancy(self.data.ED,'ADM_REQUEST_DTTM','DEPARTURE_DTTM','EDocc_awaiting_adm', query=admission_query)
 
-        IPocc_total = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_total')
-
-        IPocc_elec_nonelec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_elec_nonelec', query = elec_nonelec_query)
-
+        IPocc_nonelec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_nonelec', query = nonelec_query)
         IPocc_elec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_elec', query = elec_query)
-
-        IPocc_excludingdaycases = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_excludingdaycases', query = excludingdaycases_query)
-
         IPocc_daycases = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_daycases', query = onlydaycases_query)
-        
-        # df_new = count_hourly_occupancy2(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','new_col')
 
 
         #### combine aggregations:
@@ -118,7 +115,7 @@ class Aggregate:
             ED_departures,
 
             IP_admissions_total,
-            IP_admissions_excludingdaycases,
+            # IP_admissions_excludingdaycases,
             IP_admissions_elec,
             IP_admissions_elec_nonelec,
             IP_admissions_nonelec,
@@ -143,10 +140,8 @@ class Aggregate:
             EDocc_breaching_patients,
             EDocc_awaiting_adm,
 
-            IPocc_total,
             IPocc_elec,
-            IPocc_elec_nonelec,
-            IPocc_excludingdaycases,
+            IPocc_nonelec,
             IPocc_daycases,
             ]
 
@@ -159,6 +154,8 @@ class Aggregate:
         hourly = merge_dfs_with_datetime_index([events_df_merged, occ_df_merged])
         # create final columns as necessary
         hourly['IPadm_minus_dis_elec_nonelec'] = hourly['IP_admissions_elec_nonelec'] - hourly['IP_discharges_elec_nonelec']
+        hourly['IPocc_total'] = hourly['IPocc_nonelec'] + hourly['IPocc_elec'] + hourly['IPocc_daycases']
+        hourly['IPocc_elec_nonelec'] = hourly['IPocc_nonelec'] + hourly['IPocc_elec']
 
         #### make datetime columns
         hourly['date'] = hourly.index
@@ -166,6 +163,7 @@ class Aggregate:
 
         self.data.HOURLY = hourly
         # self.data.HOURLY2 = occ_df_merged
+        self.save_clean_to_pickle(self.data.HOURLY, 'HOURLY')
         return
     
     def make_daily_table(self):
@@ -177,7 +175,7 @@ class Aggregate:
         #### perform index resample (to daily) on each column in hourly status
         # SUMMED COLUMNS
         daily_columns_list = []
-        for column in ['ED_arrivals','ED_departures','IP_admissions_excludingdaycases']:
+        for column in ['ED_arrivals','ED_departures','IP_admissions_elec_nonelec']:
             daily_series = self.data.HOURLY[column].resample('D').sum()
             daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index 
             daily_columns_list.append(daily_df)
@@ -191,7 +189,7 @@ class Aggregate:
 
 
         # MAX columns
-        for column in ['IPocc_total','IPocc_elec_nonelec','EDocc_total','IPocc_excludingdaycases']:
+        for column in ['IPocc_total','IPocc_elec_nonelec','EDocc_total','IP_admissions_elec_nonelec']:
             daily_series = self.data.HOURLY[column].resample('D').max()
             daily_df = pd.DataFrame(daily_series) # make series into dataframe so can use merge_dfs_with_datetime_index
             daily_df.rename(columns={column:column + '_MAX'},inplace=True) # add suffix to column name in daily df
@@ -214,6 +212,7 @@ class Aggregate:
         daily_dfs_merged = make_callender_columns(daily_dfs_merged,'date','date')
 
         self.data.DAILY = daily_dfs_merged
+        self.save_clean_to_pickle(self.data.DAILY ,'DAILY')
         return
 
     def make_masterDT_index(self):
@@ -234,6 +233,13 @@ class Aggregate:
         datetimeindex = pd.DatetimeIndex(start=startDT,end=endDT,freq='H')
 
         return datetimeindex
+
+    def save_clean_to_pickle(self, dataframe ,pickle_name):
+        """ save raw df as .pkl file in the results directory specified in setup.py.
+        """
+        core.path_backslash_check(self.metadata.RESULTS_SAVE_PATH)
+        core.save_pickle(dataframe, self.metadata.RESULTS_SAVE_PATH + 'processed/', pickle_name)
+        return
 
 
 def find_max_value_in_dataframe_col(df,col_name):
@@ -302,11 +308,24 @@ def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column
     # if query present filter dataframe with it
     if query != None:
         df = df.query(query)
-    #### setup data to be easier to compute, 
+    #### to avoid errors drop all rows that have no times. NOTE: should consider a warning of the number of dropped rows here.
+    # NOTE: this will remove patients who are currently in system...and so those admitted at time of extract will be removed. (recent results will be erroneous.).
+    no_records_dropped = df.shape[0] - df.dropna(subset=[datetime_col_start,datetime_column_end]).shape[0]
+    no_records = df.shape[0]
+
+    print('Calculating ' + new_column_name + ': ' + str(no_records_dropped) + ' records were dropped because of missing time stamps' + '(out of total: ' + str(no_records) + ')')
+
+    df1 = df.dropna(subset=[datetime_col_start,datetime_column_end])
+
+    #### setup data to be quicker/easier to compute, 
 #         df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour
-    df1 = df[[datetime_col_start,datetime_column_end]].copy()
-    df1[datetime_col_start] = df1[datetime_col_start].apply(lambda x : x.replace(second=0,minute=0)) # round arrival hour down
-    df1[datetime_column_end] = df1[datetime_column_end].apply(lambda x : x.replace(second=0,minute=0)) +pd.Timedelta(hours=1)
+    df1 = df1[[datetime_col_start,datetime_column_end]]
+    df1[datetime_col_start] = df1[datetime_col_start].apply(lambda x : x.replace(second=0)) # round arrival hour down
+    df1[datetime_column_end] = df1[datetime_column_end].apply(lambda x : x.replace(second=0)) +pd.Timedelta(hours=1)
+    # original code below (before check for if copy makes a difference). 
+    # df1 = df1[[datetime_col_start,datetime_column_end]].copy()
+    # df1[datetime_col_start] = df1[datetime_col_start].apply(lambda x : x.replace(second=0,minute=0)) # round arrival hour down
+    # df1[datetime_column_end] = df1[datetime_column_end].apply(lambda x : x.replace(second=0,minute=0)) +pd.Timedelta(hours=1)
     
     
     #### create col with number of hours active 
@@ -359,3 +378,4 @@ def merge_dfs_with_datetime_index(dfs_to_merge):
     events_df_merged = reduce(lambda  left, right: pd.merge(left, right ,left_index=True, right_index=True, how='outer'), dfs_to_merge)
 
     return events_df_merged
+

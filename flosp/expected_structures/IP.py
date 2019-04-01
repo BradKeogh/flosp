@@ -3,7 +3,7 @@ import numpy as np
 # decison made not to include hospital-wide patient ID.
 dataRAW_expected_col_dtypes = {
 'PSEUDONYMISED_PATIENT_ID':str,
-'SPELL_ID':str,
+'SPELL_ID':str,                         # non-essential?
 'AGE_AT_ARRIVAL':int,
 'GENDER_NATIONAL_DESCRIPTION':str,      # Male/Female expected
 'SITE':str,                             # non-essential
@@ -14,12 +14,28 @@ dataRAW_expected_col_dtypes = {
 'DIS_DTTM':object,
 'DIS_DESTINATION':str,                  # non-essential, exp: 19, 29...
 'DIS_METHOD':str,                       # non-essential, exp: 1,2,3..7
-'LOCATION_NUMBER':int,
+'LOCATION_NUMBER':int,                  # exp:  1,2,3... (must start with 1)
 'LOCATION_START':object,
 'LOCATION_END':object,
 'LOCATION_NAME':str,                    # str description of ward/specialty
 'SPELL_LOS':int,
 }
+
+# NOTE: essential columns currently unused. 
+dataRAW_essential_columns = [
+    'PSEUDONYMISED_PATIENT_ID',
+    'AGE_AT_ARRIVAL',
+    'GENDER_NATIONAL_DESCRIPTION',
+    'ADM_DTTM',
+    'ADM_METHOD',
+    'ADM_TYPE',
+    'DIS_DTTM',
+    'LOCATION_NUMBER',
+    'LOCATION_START',
+    'LOCATION_END',
+    'LOCATION_NAME',
+    'SPELL_LOS',
+]
 
 dataRAW_expected_datetime_cols = [
     'ADM_DTTM',

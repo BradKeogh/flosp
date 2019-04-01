@@ -75,5 +75,4 @@ class LoadExpectedStructures:
         self.dataRAW_expected_datetime_cols = ExpStructure.dataRAW_expected_datetime_cols
         self.dataRAW_first_datetime_col = ExpStructure.dataRAW_first_datetime_col
         self.dataRAW_second_datetime_col = ExpStructure.dataRAW_second_datetime_col
-        print(ExpStructure)
         return

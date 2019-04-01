@@ -6,6 +6,7 @@ pmth/
 processed/
 example/example_results/
 flosp/training/
+existing_data_runs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
