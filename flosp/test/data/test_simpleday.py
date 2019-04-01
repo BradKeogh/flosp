@@ -40,7 +40,7 @@ class TestInterfaceIP():
         """check size of dataframes, check all expected columns exist etc.
         Is this useful for checks module too?
         Is this all reproduced in test_io"""
-        assert self.hosp.data.IP.shape == (48,35)
+        assert self.hosp.data.IP.shape == (48,37)
 
 
 class TestCompleteAggregation():
@@ -57,7 +57,7 @@ class TestCompleteAggregation():
         "check length of dataframe. NOTE: width will change in future as add new aggregations (columns) to analysis."
         assert self.hosp.data.HOURLY.shape[0] == 96
 
-    def test_HOURLY_shape(self):
+    def test_HOURLY_column_sums(self):
         " check sums of columns for HOURLY aggregation dataframe."
         columns = {
             'ED_arrivals':24,
