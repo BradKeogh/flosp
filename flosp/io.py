@@ -50,6 +50,7 @@ class IO:
         # some converions only for IP
         if patient_record_type == 'IP':
             self.make_simple_adm_method_column()
+            self.filter_IP_babybirths()
         
 
         #### save clean data
@@ -163,6 +164,15 @@ class IO:
         self.RawData = df
 
         return
+
+    def filter_IP_babybirths(self):
+        """ Looks at df (IP) and removes all records that are baby births. ADM_METHOD column must be in string format. """
+
+        df = self.RawData
+
+        df = df.query("ADM_METHOD not in ['82','83','2C']")
+
+        self.RawData = df
 
     def save_clean_to_pickle(self):
         """ save raw df as .pkl file in the results directory specified in setup.py.
