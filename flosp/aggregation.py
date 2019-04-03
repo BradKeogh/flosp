@@ -42,7 +42,7 @@ class Aggregate:
         #### rename LOCATION_NAME to 'FIRST_LOCATION'
         df.rename(columns={'LOCATION_NAME':'FIRST_LOCATION'},inplace=True)
         self.data.IPSPELL = df
-        self.save_clean_to_pickle(self.data.IPSPELL, 'IPspell')
+        self.save_clean_to_pickle(self.data.IPSPELL, 'IPSPELL')
         return
 
     def make_hourly_table(self):
@@ -67,12 +67,15 @@ class Aggregate:
         # Definitions found here: https://www.datadictionary.nhs.uk/data_dictionary/attributes/a/add/admission_method_de.asp?shownav=1?query=%22admission+type%22&rank=3.012927&shownav=1
 
         ## IP queries
-        nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
-        elec_query = "ADM_METHOD in ['11','12','13']" # 11,12,13
-        elec_nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81','11','12','13']"
-        nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
-        excludingdaycases_query = "ADM_TYPE in ['Non-Elective','Elective']"
+        # nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
+        # elec_query = "ADM_METHOD in ['11','12','13']" # 11,12,13
+        # elec_nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81','11','12','13']"
+        # nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
+        # excludingdaycases_query = "ADM_TYPE in ['Non-Elective','Elective']"
         onlydaycases_query = "ADM_TYPE in ['Day Case']"
+        elec_query = "ADM_TYPE in ['Elective']"
+        nonelec_query = "ADM_TYPE in ['Non-Elective']"
+        elec_nonelec_query = "ADM_TYPE in ['Non-Elective','Elective']"
         ## ED queries
         breach_query = "BREACH_FLAG in [1]" # lookat records with only patients who breach.
         admission_query = "ADMISSION_FLAG in [1]" # look at records with only patients who are admitted.
@@ -103,10 +106,12 @@ class Aggregate:
         EDocc_breaching_patients = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_breaching_patients', query=breach_query)
         EDocc_awaiting_adm = count_hourly_occupancy(self.data.ED,'ADM_REQUEST_DTTM','DEPARTURE_DTTM','EDocc_awaiting_adm', query=admission_query)
 
+        print(self.data.IPSPELL.shape)
         IPocc_nonelec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_nonelec', query = nonelec_query)
+        self.data.test = IPocc_nonelec
         IPocc_elec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_elec', query = elec_query)
         IPocc_daycases = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_daycases', query = onlydaycases_query)
-
+        print(self.data.IPSPELL.shape)
 
         #### combine aggregations:
         ## Events - merge, reindex, fill zeros
@@ -147,11 +152,15 @@ class Aggregate:
 
         occ_df_merged = merge_dfs_with_datetime_index(occ_dfs)
         occ_df_merged = occ_df_merged.resample('H').ffill() # fill missing hours in datetime index. ffill from previous occupancy that has been calculated.
-        events_df_merged.fillna(value='ffill', inplace=True)
+        # occ_df_merged.fillna(method = 'ffill', inplace = True)
+        occ_df_merged.fillna(value = 0, inplace = True)
+        
 
 
         # Merge into one table, assign to data class
         hourly = merge_dfs_with_datetime_index([events_df_merged, occ_df_merged])
+        # print(hourly.columns)
+        # print(hourly.head())
         # create final columns as necessary
         hourly['IPadm_minus_dis_elec_nonelec'] = hourly['IP_admissions_elec_nonelec'] - hourly['IP_discharges_elec_nonelec']
         hourly['IPocc_total'] = hourly['IPocc_nonelec'] + hourly['IPocc_elec'] + hourly['IPocc_daycases']
@@ -298,7 +307,7 @@ def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column
     datetime_col_start, str, name of column in df when the activity begins. Column must be in datetime format.
     datetime_col_end, str, name of column in df when the activity ends. Column must be in datetime format.
     new_col_name, str, name to assign the new column that is produced.
-    query, str, optional, sql-style query called on df using df.query('input string query here')
+    query, str, optional, sql-style query called on df using df.query('input string query here').
 
     Output
     ======
@@ -308,20 +317,22 @@ def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column
     # if query present filter dataframe with it
     if query != None:
         df = df.query(query)
-    #### to avoid errors drop all rows that have no times. NOTE: should consider a warning of the number of dropped rows here.
-    # NOTE: this will remove patients who are currently in system...and so those admitted at time of extract will be removed. (recent results will be erroneous.).
+
+    #### Statement for user to see how many erroneous values have been
     no_records_dropped = df.shape[0] - df.dropna(subset=[datetime_col_start,datetime_column_end]).shape[0]
     no_records = df.shape[0]
 
     print('Calculating ' + new_column_name + ': ' + str(no_records_dropped) + ' records were dropped because of missing time stamps' + '(out of total: ' + str(no_records) + ')')
 
+    #### to avoid errors drop all rows that have no times. NOTE: should consider a warning of the number of dropped rows here.
+    # NOTE: this will remove patients who are currently in system...and so those admitted at time of extract will be removed. (recent results will be erroneous.).
     df1 = df.dropna(subset=[datetime_col_start,datetime_column_end])
 
     #### setup data to be quicker/easier to compute, 
 #         df['event_column_name_rounded'] = df[event_column_name].apply(lambda x : x.replace(second=0, minute=0)) # round to lower hour
-    df1 = df1[[datetime_col_start,datetime_column_end]]
-    df1[datetime_col_start] = df1[datetime_col_start].apply(lambda x : x.replace(second=0)) # round arrival hour down
-    df1[datetime_column_end] = df1[datetime_column_end].apply(lambda x : x.replace(second=0)) +pd.Timedelta(hours=1)
+    df1 = df1[[datetime_col_start,datetime_column_end]].copy()
+    df1[datetime_col_start] = df1[datetime_col_start].apply(lambda x : x.replace(second=0,minute=0)) # round arrival hour down
+    df1[datetime_column_end] = df1[datetime_column_end].apply(lambda x : x.replace(second=0,minute=0)) +pd.Timedelta(hours=1)
     # original code below (before check for if copy makes a difference). 
     # df1 = df1[[datetime_col_start,datetime_column_end]].copy()
     # df1[datetime_col_start] = df1[datetime_col_start].apply(lambda x : x.replace(second=0,minute=0)) # round arrival hour down

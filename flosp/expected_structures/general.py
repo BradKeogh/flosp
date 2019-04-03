@@ -1,6 +1,6 @@
 import pandas as pd
 
-possible_pkls_list = ['ED.pkl','IP.pkl','IPspell.pkl','HOURLY.pkl','DAILY.pkl']
+possible_pkls_list = ['ED.pkl','IP.pkl','IPSPELL.pkl','HOURLY.pkl','DAILY.pkl']
 
 # Info about plots: plot number, plot name, ED or IP, DAILY, data required?, [historical, Period, week] 
 cols = ['plot_number','plot_name','plot_type','data_required']

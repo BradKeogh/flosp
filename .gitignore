@@ -7,6 +7,9 @@ processed/
 example/example_results/
 flosp/training/
 existing_data_runs/
+flosp/test/data/simpleday/example_results/
+flosp/test/data/complexday/example_results/
+refactoring/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

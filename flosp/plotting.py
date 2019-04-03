@@ -147,7 +147,7 @@ class HistoricalPlotting:
         ""
         plot_number = 11
 
-        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPspell')
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPSPELL')
         #### filter for baby births
         pat_filtered = pat_filtered.query("ADM_METHOD not in ['82','83','2C']")
 
@@ -173,7 +173,7 @@ class HistoricalPlotting:
         ""
         plot_number = 12
 
-        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPspell')
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPSPELL')
         #### filter for baby births
         pat_filtered = pat_filtered.query("ADM_METHOD not in ['82','83','2C']")
 
@@ -212,7 +212,7 @@ class HistoricalPlotting:
         ""
         plot_number = 14
 
-        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPspell')
+        plot_info, pat_filtered, title = self.get_historical_plot_info(plot_number, 'IPSPELL')
         #### filter for baby births
         pat_filtered = pat_filtered.query("ADM_METHOD not in ['82','83','2C']")
         ####
@@ -309,7 +309,7 @@ class HistoricalPlotting:
             years = self.IPyears
             pat_filtered = pat.query('ADM_year in ' + str(years) +' or DIS_year in ' + str(years))
         
-        elif data_name == 'IPspell':
+        elif data_name == 'IPSPELL':
             years = self.IPyears
             pat_filtered = pat.query('ADM_year in ' + str(years) +' or DIS_year in ' + str(years))
         
@@ -828,7 +828,7 @@ class WeeklyPlotting:
         return
 
     def plot24(self):
-        """ Creates plots and tables for a week of ED activity: plot of occupancy & of arrivals/departures. """
+        """ Creates plots and tables for a week of IP activity: plot of occupancy & of arrivals/departures. """
         # data
         plot_number = 24
         days = 7
