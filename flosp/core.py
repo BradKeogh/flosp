@@ -161,3 +161,22 @@ def create_spell_from_multimove(df,col_move_no='move_no' ):
 
     dfspel.drop('index',axis=1,inplace=True)
     return(dfspel)
+
+def make_admtype_from_adm_method_column(df):
+    """
+    Takes IP pandas df in FLOSP format and creates column ADM_TYPE with entries Elective/Non-Elective/Day Case.
+    ADM_METHOD column must be in string format.
+    """
+    
+    elec_query = "ADM_METHOD in ['11','12','13']"
+    nonelec_query = "ADM_METHOD in ['21','22','23','24','25','2A','2B','2C','2D','28','81']"
+
+    df['ADM_TYPE'] = '' # make empty column 
+    # fill columns with 
+    df.loc[df.query(elec_query).index, 'ADM_TYPE'] = 'Elective'
+    df.loc[df.query(nonelec_query).index, 'ADM_TYPE'] = 'Non-Elective'
+    df.loc[df.query("SPELL_LOS < 1").index, 'ADM_TYPE'] = 'Day Case' # this is basic, actually should be something like if ADM_DTTM =! DIS_DTTM
+    
+    return df
+
+
