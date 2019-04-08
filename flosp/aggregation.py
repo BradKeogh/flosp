@@ -359,7 +359,7 @@ def count_hourly_occupancy_LEGACY(df,datetime_col_start,datetime_column_end, new
     ======
     df, pandas dataframe, datetime index at hourly level, single column containing the count of activity in that hour
     (index potentially not continuous).
-    NOTE: this legacy function is 4* quicker than the new implementation.
+    NOTE: this legacy function may be quicker than the new implementation.
     """
     # if query present filter dataframe with it
     if query != None:

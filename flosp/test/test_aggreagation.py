@@ -2,12 +2,13 @@ import numpy as np
 import pandas as pd
 
 from flosp.interface import Interface
-from flosp import aggregation 
+from flosp import aggregation
+from flosp.aggregation import get_max_min_datetimes, get_occ_hour_athour
 
 
 class TestAgg():
     """ 
-    .
+    Testing of aggregation functions for simple day example data.
     """
 
     def setup(self):
@@ -19,6 +20,7 @@ class TestAgg():
     def test_hourly_IPocc_total(self):
         """
         Test occupancy calcs, flosp vs. manual check with function from this test file.
+        This is really testing that the flosp aggregation of occupancy calcs is correct, rather than the calculation of occupancy itself.
         """
         #### get list of datetimes to test
 
@@ -80,52 +82,6 @@ class TestAgg():
         """check returns dataframe object, with valid and invalid inputs"""
         pass
 
-
-
-
-def get_occ_hour_inwindow(df, start_col, end_col, window_start):
-    """
-    Calculate an occupancy from given padnas dataframe. 
-    Window can be variable in length but include allrecords who were active within that time period.
-    
-    Input
-    -----
-    df, padnas dataframe, patient record level data.
-    start_col, string, column name for start datetime 
-    end_col, string, column name for end of record datetime
-    window_start, numpy datetime object, hour at which window starts.
-    window_end, numpy datetime object, hour at which window ends.
-    """
-    
-    datetime_hour_1 = window_start + pd.Timedelta(1, 'h')
-    occ = df[(df[start_col] < datetime_hour_1) & (df[end_col] >= window_start)].shape[0]
-    
-    return occ
-
-def get_occ_hour_athour(df, start_col, end_col, datetime_hour):
-    """
-    Calculate an occupancy from given padnas dataframe. 
-    Window can be variable in length but include allrecords who were active within that time period.
-    
-    Input
-    -----
-    df, padnas dataframe, patient record level data.
-    start_col, string, column name for start datetime 
-    end_col, string, column name for end of record datetime
-    window_start, numpy datetime object, hour at which window starts.
-    window_end, numpy datetime object, hour at which window ends.
-    """
-    
-    occ = df[(df[start_col] <= datetime_hour) & (df[end_col] > datetime_hour)].shape[0]
-    
-    return occ
-
-def get_max_min_datetimes(df,col_name):
-    "Get min and max datetimes from a padnas df column."
-    min_val = df[col_name].min()
-    max_val = df[col_name].max()
-    
-    return min_val, max_val
 
 def get_datetimes_list(df,col_name):
     """
