@@ -802,7 +802,7 @@ class WeeklyPlotting:
         figA, axA = plt.subplots()
         tableA = df[s:e][EDocccols]
         tableA.plot.area(stacked=False,figsize=size,ax=axA)
-        axA.set_ylim(0,50)
+        axA.set_ylim(0,df['EDocc_total'].max())
         axA.set_ylabel('Number of patients in ED')
         axA.legend(frameon=True)
     #     fig.savefig('./../hhft/visualisataions_for_hhft_slides(IP)/plots/' + name + '.png', dpi=300)
@@ -814,7 +814,7 @@ class WeeklyPlotting:
         figB, axB = plt.subplots()
         tableB = df[s:e][EDflowcols].rolling(3).mean()
         tableB.plot(figsize=size,ax=axB)
-        axB.set_ylim(0,25)
+        axB.set_ylim(0,df['ED_arrivals'].max())
         axB.set_ylabel('Number of attendances and leaving ED per hour')
         axB.legend(frameon=True)
     #     fig.savefig('./../hhft/visualisataions_for_hhft_slides(IP)/plots/' + name + '.png', dpi=300)
@@ -847,12 +847,13 @@ class WeeklyPlotting:
             #warnings.warn('The date does not start on a monday.')
 
         #### IP occ plot
-        IPocccols = ['IPocc_total','IPocc_elec_nonelec','IPocc_daycases','IPocc_elec']
+        IPocccols = ['IPocc_total','IPocc_nonelec','IPocc_daycases','IPocc_elec']
         # name  = '-'.join([str(x) for x in start]) + '_IP_occ' +  addname
         figA, axA = plt.subplots()
         tableA = df[s:e][IPocccols]
         tableA.plot.area(stacked=False,figsize=size,ax=axA)
-        axA.set_ylim(0,550)
+        
+        axA.set_ylim(0,df['IPocc_total'].max())
         axA.set_ylabel('Number of attendances and leaving ED per hour')
         axA.legend(frameon=True)
         #     fig.savefig('./../hhft/visualisataions_for_hhft_slides(IP)/plots/' + name + '.png', dpi=300)
@@ -863,7 +864,7 @@ class WeeklyPlotting:
         figB, axB = plt.subplots()
         tableB = df[s:e][IPcols].rolling(1).mean()
         tableB.plot(figsize=size,ax=axB);
-        axB.set_ylim(0,50)
+        axB.set_ylim(0,df['IP_admissions_total'].max())
         axB.set_ylabel('Number of inpatients')
         axB.legend(frameon=True)
 
