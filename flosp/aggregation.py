@@ -106,12 +106,13 @@ class Aggregate:
         EDocc_breaching_patients = count_hourly_occupancy(self.data.ED,'ARRIVAL_DTTM','DEPARTURE_DTTM','EDocc_breaching_patients', query=breach_query)
         EDocc_awaiting_adm = count_hourly_occupancy(self.data.ED,'ADM_REQUEST_DTTM','DEPARTURE_DTTM','EDocc_awaiting_adm', query=admission_query)
 
-        print(self.data.IPSPELL.shape)
+        # print(self.data.IPSPELL.shape)
         IPocc_nonelec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_nonelec', query = nonelec_query)
         self.data.test = IPocc_nonelec
         IPocc_elec = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_elec', query = elec_query)
         IPocc_daycases = count_hourly_occupancy(self.data.IPSPELL,'ADM_DTTM','DIS_DTTM','IPocc_daycases', query = onlydaycases_query)
-        print(self.data.IPSPELL.shape)
+        # print(self.data.IPSPELL.shape)
+
 
         #### combine aggregations:
         ## Events - merge, reindex, fill zeros
@@ -294,8 +295,53 @@ def count_hourly_events(df,event_column_name,new_col_name, query = None):
     event_counts = pd.DataFrame(data = counts, index= unique, columns = [new_col_name])
     return event_counts
 
+def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column_name, query = None):
+    """
+    Function takes patient record level dataframe and calculates the occupancy/activity for each hour of the day.
+    The activity is defined based on the two datetime columns being provided.
+    e.g. if 'attendnace datetime' and 'departure datetime' were given then the 'activity' would be the occupancy of the department.
+
+    Inputs
+    ======
+    df, pandas dataframe, with patient-record level activity.
+    datetime_col_start, str, name of column in df when the activity begins. Column must be in datetime format.
+    datetime_col_end, str, name of column in df when the activity ends. Column must be in datetime format.
+    new_col_name, str, name to assign the new column that is produced.
+    query, str, optional, sql-style query called on df using df.query('input string query here')
+
+    Output
+    ======
+    df, pandas dataframe, datetime index at hourly level, single column containing the count of activity in that hour
+    (index potentially not continuous).
+    """
+    #### if query present filter dataframe with it
+    if query != None:
+        df = df.query(query)#[datetime_col_start,datetime_column_end]
+
+    #### Print a statement for user to see how many erroneous values have been
+    no_records_dropped = df.shape[0] - df.dropna(subset=[datetime_col_start,datetime_column_end]).shape[0]
+    no_records = df.shape[0]
+    print('Calculating ' + new_column_name + ': ' + str(no_records_dropped) + ' records were dropped because of missing time stamps' + '(out of total: ' + str(no_records) + ')')
     
-def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column_name,query = None):
+    #### Get list of hour slots that are required
+    if df.shape[0] != 0:
+        index = get_datetimes_list_all(df,datetime_col_start)
+    else:
+        index = pd.date_range(pd.datetime(2018,1,1),freq='h',periods=1) # this is required as if the query comes back with zero record df there is an error. 
+    
+    #### setup dataframe for occupancy calcs
+    data = {new_column_name : [np.nan] * len(index)} # make empty rows as initialising all saves memory
+    hourly_df = pd.DataFrame(data=data, index=index)
+
+    #### iterate through df
+    for index, row in hourly_df.iterrows():
+        occ = get_occ_hour_athour(df, datetime_col_start, datetime_column_end, index) # calc occ
+        hourly_df.loc[index, new_column_name] = occ # save into hourly occupancy df
+    
+    
+    return(hourly_df)
+    
+def count_hourly_occupancy_LEGACY(df,datetime_col_start,datetime_column_end, new_column_name,query = None):
     """
     Function takes patient record level dataframe and calculates the occupancy/activity for each hour of the day.
     The activity is defined based on the two datetime columns being provided.
@@ -313,6 +359,7 @@ def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column
     ======
     df, pandas dataframe, datetime index at hourly level, single column containing the count of activity in that hour
     (index potentially not continuous).
+    NOTE: this legacy function is 4* quicker than the new implementation.
     """
     # if query present filter dataframe with it
     if query != None:
@@ -321,10 +368,9 @@ def count_hourly_occupancy(df,datetime_col_start,datetime_column_end, new_column
     #### Statement for user to see how many erroneous values have been
     no_records_dropped = df.shape[0] - df.dropna(subset=[datetime_col_start,datetime_column_end]).shape[0]
     no_records = df.shape[0]
-
     print('Calculating ' + new_column_name + ': ' + str(no_records_dropped) + ' records were dropped because of missing time stamps' + '(out of total: ' + str(no_records) + ')')
 
-    #### to avoid errors drop all rows that have no times. NOTE: should consider a warning of the number of dropped rows here.
+    #### to avoid errors drop all rows that have no times.
     # NOTE: this will remove patients who are currently in system...and so those admitted at time of extract will be removed. (recent results will be erroneous.).
     df1 = df.dropna(subset=[datetime_col_start,datetime_column_end])
 
@@ -390,3 +436,59 @@ def merge_dfs_with_datetime_index(dfs_to_merge):
 
     return events_df_merged
 
+def get_datetimes_list_all(df,col_name):
+    " Produce a list of possible datetime hours for test sample. NOTE: use floor instead?"
+    min_val, max_val = get_max_min_datetimes(df,col_name)
+    min_val = min_val.replace(second=0,minute=0, microsecond=0)
+    max_val = max_val.replace(second=0,minute=0, microsecond=0)
+    
+    hours_list = pd.date_range(min_val,max_val,freq='h')
+    
+    return(hours_list)
+
+def get_occ_hour_inwindow(df, start_col, end_col, window_start):
+    """
+    Calculate an occupancy from given padnas dataframe. 
+    Window can be variable in length but include allrecords who were active within that time period.
+    
+    Input
+    -----
+    df, padnas dataframe, patient record level data.
+    start_col, string, column name for start datetime 
+    end_col, string, column name for end of record datetime
+    window_start, numpy datetime object, hour at which window starts.
+    window_end, numpy datetime object, hour at which window ends.
+    """
+    
+    datetime_hour_1 = window_start + pd.Timedelta(1, 'h')
+    occ = df[(df[start_col] < datetime_hour_1) & (df[end_col] >= window_start)].shape[0]
+    
+    return occ
+
+def get_occ_hour_athour(df, start_col, end_col, datetime_hour):
+    """
+    Calculate an occupancy from given padnas dataframe. 
+    Window can be variable in length but include allrecords who were active within that time period.
+    
+    Input
+    -----
+    df, padnas dataframe, patient record level data.
+    start_col, string, column name for start datetime 
+    end_col, string, column name for end of record datetime
+    window_start, numpy datetime object, hour at which window starts.
+    window_end, numpy datetime object, hour at which window ends.
+    """
+    
+    occ = df[(df[start_col] <= datetime_hour) & (df[end_col] > datetime_hour)].shape[0]
+    
+    return occ
+
+def get_max_min_datetimes(df,col_name):
+    "Get min and max datetimes from a padnas df datetime column."
+    df = df.dropna(subset=[col_name])
+    min_val = df[col_name].min()
+    max_val = df[col_name].max()
+
+    # print(min_val,max_val)
+    
+    return min_val, max_val
